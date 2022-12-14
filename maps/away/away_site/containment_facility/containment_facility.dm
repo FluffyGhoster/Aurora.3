@@ -10,7 +10,7 @@
 
 /area/containment_facility
 	name = "Containment Facility"
-	requires_power = TRUE
+	requires_power = FALSE
 
 /area/containment_facility/arrivals
 	name = "Containment Facility Arrivals"
