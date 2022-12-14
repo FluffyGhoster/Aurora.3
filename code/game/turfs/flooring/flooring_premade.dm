@@ -234,6 +234,10 @@
 	icon_state = "white"
 	initial_flooring = /decl/flooring/tiling/red
 
+/turf/simulated/floor/tiled/red/airless
+	oxygen = 0
+	nitrogen = 0
+
 /turf/simulated/floor/tiled/steel
 	name = "steel floor"
 	icon = 'icons/turf/total_floors.dmi'
@@ -263,6 +267,10 @@
 	icon_state = "old_white"
 	initial_flooring = /decl/flooring/tiling/old_white
 
+/turf/simulated/floor/tiled/old_white/airless
+	oxygen = 0
+	nitrogen = 0
+
 /turf/simulated/floor/tiled/asteroid
 	icon = 'icons/turf/total_floors.dmi'
 	icon_state = "asteroidfloor"
@@ -287,6 +295,10 @@
 	color = COLOR_BROWN
 	icon_state = "white"
 	initial_flooring = /decl/flooring/tiling/yellow
+
+/turf/simulated/floor/tiled/yellow/airless
+	oxygen = 0
+	nitrogen = 0
 
 /turf/simulated/floor/tiled/freezer
 	name = "tiles"
