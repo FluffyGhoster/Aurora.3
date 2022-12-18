@@ -17,7 +17,8 @@
 /area/containment_facility/subjects_lab)
 "aia" = (
 /obj/machinery/door/airlock/glass_research{
-	insecure = 0
+	insecure = 0;
+	req_access = list(202)
 	},
 /obj/machinery/atmospherics/pipe/simple/hidden/scrubbers{
 	dir = 4
@@ -34,7 +35,7 @@
 /turf/simulated/floor/tiled/red/airless,
 /area/containment_facility/access_checkpoint)
 "ams" = (
-/turf/simulated/floor/airless,
+/turf/simulated/floor/tiled/dark/full,
 /area/containment_facility/arrivals)
 "amT" = (
 /turf/simulated/wall/titanium_reinforced/containment,
@@ -67,7 +68,7 @@
 /obj/machinery/atmospherics/pipe/simple/hidden/purple{
 	dir = 4
 	},
-/turf/simulated/floor/tiled/full/airless,
+/turf/simulated/floor/tiled/full,
 /area/containment_facility/arrivals)
 "ask" = (
 /obj/machinery/atmospherics/pipe/simple/hidden/supply{
@@ -141,6 +142,9 @@
 /obj/machinery/atmospherics/pipe/simple/hidden/scrubbers{
 	dir = 4
 	},
+/obj/machinery/atmospherics/pipe/simple/hidden/supply{
+	dir = 4
+	},
 /turf/simulated/floor/airless,
 /area/containment_facility/arrivals_scrub)
 "aJD" = (
@@ -200,7 +204,7 @@
 /turf/simulated/floor/tiled/white/airless,
 /area/containment_facility/subjects_lab)
 "bcU" = (
-/obj/structure/closet/l3closet/virology,
+/obj/structure/closet/hazmat/general,
 /turf/simulated/floor/tiled/white/airless,
 /area/containment_facility/arrivals_scrub)
 "beA" = (
@@ -234,13 +238,17 @@
 /area/containment_facility/subjects_lab)
 "bnX" = (
 /obj/machinery/portable_atmospherics/canister/empty/phoron{
-	icon_state = "orange-1"
+	icon_state = "orange-1";
+	health = 0;
+	maxhealth = 0
 	},
 /obj/effect/decal/cleanable/dirt,
 /turf/simulated/floor/tiled/white/airless,
 /area/containment_facility/subjects_lab)
 "brB" = (
-/obj/machinery/door/airlock/highsecurity,
+/obj/machinery/door/airlock/highsecurity{
+	req_access = list(301)
+	},
 /obj/machinery/door/blast/regular{
 	id = "lab_blast";
 	name = "Lab Door";
@@ -322,8 +330,11 @@
 /turf/simulated/floor/tiled/red/airless,
 /area/containment_facility/arrivals_scrub)
 "bPQ" = (
-/turf/space,
-/area/containment_facility/arrivals)
+/obj/machinery/door/airlock/maintenance{
+	name = "Emergency Ext Power"
+	},
+/turf/simulated/floor/tiled/red/airless,
+/area/space)
 "bRD" = (
 /obj/machinery/atmospherics/pipe/simple/hidden/supply{
 	dir = 9
@@ -339,7 +350,8 @@
 	check_access = 0;
 	check_arrest = 0;
 	check_records = 0;
-	pixel_y = 29
+	pixel_y = 29;
+	req_access = list(301)
 	},
 /turf/simulated/floor/tiled/old_white/airless,
 /area/containment_facility/common_area)
@@ -552,7 +564,12 @@
 /turf/template_noop,
 /area/space)
 "dAs" = (
-/obj/machinery/porta_turret/xray,
+/obj/machinery/porta_turret/xray{
+	maxhealth = 0;
+	health = 0;
+	raised = 1;
+	stat = 1
+	},
 /obj/effect/decal/warning_stripes,
 /turf/simulated/floor/tiled/old_white/airless,
 /area/containment_facility/common_area)
@@ -650,6 +667,19 @@
 /obj/machinery/shieldgen,
 /turf/simulated/floor/reinforced/airless,
 /area/containment_facility/selfdestruct)
+"esS" = (
+/obj/effect/decal/cleanable/dirt,
+/obj/effect/landmark/corpse/containment_facility/containment_security{
+	dir = 1
+	},
+/obj/effect/decal/cleanable/blood/splatter{
+	color = "#A10808";
+	icon_state = "mfloor6";
+	pixel_y = 8;
+	dir = 8
+	},
+/turf/simulated/floor/reinforced/airless,
+/area/containment_facility/subjects_lab)
 "etK" = (
 /obj/machinery/atmospherics/pipe/simple/hidden/scrubbers,
 /obj/machinery/atmospherics/pipe/simple/hidden/supply,
@@ -664,7 +694,8 @@
 	icon = 'icons/obj/modular_console.dmi';
 	icon_state = "computer";
 	density = 1;
-	dir = 8
+	dir = 8;
+	name = "Sub-Bluespace Emergency Comms"
 	},
 /turf/simulated/floor/reinforced/airless,
 /area/containment_facility/selfdestruct)
@@ -764,17 +795,6 @@
 /turf/simulated/floor/reinforced/airless,
 /area/containment_facility/subjects_lab)
 "eRt" = (
-/obj/machinery/atmospherics/pipe/simple/hidden/supply{
-	dir = 6
-	},
-/obj/machinery/atmospherics/pipe/simple/hidden/scrubbers{
-	dir = 6
-	},
-/obj/structure/cable/yellow{
-	d1 = 2;
-	d2 = 4;
-	icon_state = "2-4"
-	},
 /obj/item/crowbar/rescue_axe/red,
 /turf/simulated/floor/airless,
 /area/containment_facility/common_area)
@@ -837,6 +857,13 @@
 	},
 /turf/simulated/floor/tiled/yellow/airless,
 /area/containment_facility/engineering)
+"frg" = (
+/obj/machinery/light,
+/obj/structure/cable/yellow{
+	icon_state = "4-8"
+	},
+/turf/simulated/floor/tiled/steel/airless,
+/area/containment_facility/access_checkpoint)
 "ftJ" = (
 /obj/effect/map_effect/window_spawner/full/borosilicate/reinforced,
 /turf/simulated/floor/tiled/yellow/airless,
@@ -871,7 +898,8 @@
 /area/containment_facility/access_checkpoint)
 "fAY" = (
 /obj/machinery/door/airlock/engineering{
-	insecure = 0
+	insecure = 0;
+	req_access = list(301)
 	},
 /obj/machinery/atmospherics/pipe/simple/hidden/supply{
 	dir = 4
@@ -882,7 +910,9 @@
 /obj/structure/cable/yellow{
 	icon_state = "4-8"
 	},
-/obj/machinery/door/firedoor,
+/obj/machinery/door/firedoor{
+	blocked = 1
+	},
 /turf/simulated/floor/tiled/yellow/airless,
 /area/containment_facility/engineering)
 "fDm" = (
@@ -891,6 +921,16 @@
 	},
 /turf/simulated/floor/tiled/steel/airless,
 /area/containment_facility/access_checkpoint)
+"fEy" = (
+/obj/structure/closet,
+/obj/structure/cable/yellow{
+	icon_state = "2-8"
+	},
+/obj/item/stack/material/graphite/full{
+	max_amount = 1
+	},
+/turf/simulated/floor/tiled/red/airless,
+/area/space)
 "fET" = (
 /obj/machinery/light{
 	dir = 1
@@ -925,11 +965,15 @@
 /turf/simulated/floor/reinforced/airless,
 /area/containment_facility/subjects_lab)
 "fNK" = (
-/obj/machinery/alarm{
-	pixel_y = 30
+/obj/machinery/porta_turret/ballistic{
+	health = 0;
+	maxhealth = 0;
+	stat = 1;
+	raised = 1
 	},
-/turf/simulated/floor/reinforced/airless,
-/area/containment_facility/subjects_lab)
+/obj/effect/decal/warning_stripes,
+/turf/simulated/floor/tiled/old_white/airless,
+/area/containment_facility/common_area)
 "fPJ" = (
 /obj/effect/decal/cleanable/blood/gibs/body{
 	fleshcolor = "#FF0000"
@@ -1005,6 +1049,17 @@
 "gfL" = (
 /turf/simulated/wall/titanium_reinforced/containment,
 /area/containment_facility/access_checkpoint)
+"ghp" = (
+/obj/effect/decal/cleanable/dirt,
+/obj/effect/decal/cleanable/blood/splatter{
+	color = "#A10808";
+	icon_state = "mfloor2";
+	pixel_y = 0;
+	pixel_x = 32
+	},
+/obj/effect/landmark/corpse/scientist,
+/turf/simulated/floor/reinforced/airless,
+/area/containment_facility/subjects_lab)
 "gms" = (
 /obj/machinery/atmospherics/pipe/manifold/hidden/scrubbers{
 	dir = 4
@@ -1123,7 +1178,12 @@
 /turf/simulated/floor/reinforced/airless,
 /area/containment_facility/selfdestruct)
 "gPF" = (
-/obj/machinery/porta_turret/sniper,
+/obj/machinery/porta_turret/sniper{
+	health = 0;
+	maxhealth = 0;
+	stat = 1;
+	raised = 1
+	},
 /obj/effect/decal/warning_stripes,
 /turf/simulated/floor/tiled/old_white/airless,
 /area/containment_facility/common_area)
@@ -1274,8 +1334,9 @@
 /area/containment_facility/selfdestruct)
 "hQW" = (
 /obj/effect/decal/cleanable/dirt,
-/obj/item/hullbeacon/red{
-	pixel_y = -12
+/obj/machinery/light/small/red{
+	dir = 2;
+	color = "#FA8282"
 	},
 /turf/simulated/floor/tiled/old_white/airless,
 /area/containment_facility/common_area)
@@ -1286,13 +1347,15 @@
 /turf/simulated/floor/tiled/old_white/airless,
 /area/containment_facility/common_area)
 "hRb" = (
-/obj/machinery/door/airlock/highsecurity,
+/obj/machinery/door/airlock/highsecurity{
+	req_access = list(301)
+	},
+/obj/effect/decal/cleanable/dirt,
 /obj/machinery/door/blast/regular{
 	id = "lab_blast";
 	name = "Lab Door";
 	dir = 4
 	},
-/obj/effect/decal/cleanable/dirt,
 /turf/simulated/floor/reinforced/airless,
 /area/containment_facility/subjects_lab)
 "hTE" = (
@@ -1313,6 +1376,17 @@
 	},
 /obj/structure/cable/yellow{
 	icon_state = "4-8"
+	},
+/obj/item/card/id/away_site{
+	name = "Leni Reviel";
+	age = "28";
+	blood_type = "A-";
+	citizenship = "Biesel";
+	gender = "male";
+	registered_name = "Leni Reviel";
+	sex = "Male";
+	assignment = "Containment Unit Commander";
+	access = list(301,13)
 	},
 /turf/simulated/floor/tiled/steel/airless,
 /area/containment_facility/access_checkpoint)
@@ -1416,7 +1490,7 @@
 /obj/machinery/door/airlock/glass_security{
 	id_tag = "BrigFoyer";
 	name = "Security Wing";
-	req_access = list(63)
+	req_access = list(301)
 	},
 /obj/machinery/door/firedoor,
 /obj/structure/cable/yellow{
@@ -1505,7 +1579,7 @@
 	dir = 4
 	},
 /obj/effect/landmark/corpse/containment_facility/containment_security,
-/turf/simulated/floor/tiled/full/airless,
+/turf/simulated/floor/tiled/full,
 /area/containment_facility/arrivals)
 "iKx" = (
 /obj/machinery/atmospherics/pipe/simple/hidden/scrubbers,
@@ -1626,11 +1700,8 @@
 /turf/simulated/floor/tiled/full/airless,
 /area/containment_facility/arrivals_scrub)
 "jKk" = (
-/obj/machinery/door/airlock/highsecurity,
-/obj/machinery/door/blast/regular{
-	id = "lab_blast";
-	name = "Lab Door";
-	dir = 4
+/obj/machinery/door/airlock/highsecurity{
+	req_access = list(301)
 	},
 /obj/machinery/atmospherics/pipe/simple/hidden/supply,
 /obj/machinery/atmospherics/pipe/simple/hidden/scrubbers{
@@ -1640,6 +1711,11 @@
 	icon_state = "1-2"
 	},
 /obj/effect/decal/cleanable/dirt,
+/obj/machinery/door/blast/regular{
+	id = "lab_blast";
+	name = "Lab Door";
+	dir = 4
+	},
 /turf/simulated/floor/reinforced/airless,
 /area/containment_facility/subjects_lab)
 "jKn" = (
@@ -1753,6 +1829,13 @@
 /obj/effect/decal/cleanable/dirt,
 /turf/simulated/floor/tiled/steel/airless,
 /area/containment_facility/access_checkpoint)
+"kNk" = (
+/obj/machinery/power/portgen/basic{
+	anchored = 1
+	},
+/obj/structure/cable/yellow,
+/turf/simulated/floor/tiled/red/airless,
+/area/space)
 "kOC" = (
 /obj/machinery/atmospherics/pipe/simple/hidden/supply{
 	dir = 4
@@ -2001,7 +2084,7 @@
 /obj/machinery/door/airlock/glass_security{
 	id_tag = "BrigFoyer";
 	name = "Security Wing";
-	req_access = list(63)
+	req_access = list(301)
 	},
 /obj/machinery/door/firedoor,
 /turf/simulated/floor/tiled/red/airless,
@@ -2079,6 +2162,19 @@
 	},
 /turf/simulated/floor/plating,
 /area/containment_facility/engineering)
+"mTU" = (
+/obj/item/card/id/away_site{
+	name = "Research Doctor";
+	age = "42";
+	blood_type = "B+";
+	citizenship = "Biesel";
+	gender = "male";
+	registered_name = "Mark Tolieveni";
+	sex = "Male";
+	assignment = "Research Doctor"
+	},
+/turf/simulated/floor/tiled/white/airless,
+/area/containment_facility/arrivals_scrub)
 "mUx" = (
 /obj/machinery/door/airlock/engineering{
 	insecure = 0
@@ -2098,6 +2194,9 @@
 	dir = 5
 	},
 /obj/effect/decal/cleanable/dirt,
+/obj/effect/decal/cleanable/blood/splatter{
+	color = "#A10808"
+	},
 /turf/simulated/floor/reinforced/airless,
 /area/containment_facility/subjects_lab)
 "mVG" = (
@@ -2135,6 +2234,13 @@
 	},
 /turf/simulated/floor/tiled/yellow/airless,
 /area/containment_facility/engineering)
+"nkW" = (
+/obj/machinery/light/small/red{
+	dir = 4;
+	color = "#FA8282"
+	},
+/turf/simulated/floor/tiled/old_white/airless,
+/area/containment_facility/common_area)
 "nvz" = (
 /obj/machinery/atmospherics/unary/vent_scrubber/on{
 	dir = 1
@@ -2142,7 +2248,7 @@
 /obj/item/gun/projectile/automatic/c20r{
 	magazine_type = null
 	},
-/turf/simulated/floor/tiled/full/airless,
+/turf/simulated/floor/tiled/full,
 /area/containment_facility/arrivals)
 "nvJ" = (
 /obj/machinery/atmospherics/binary/pump/high_power{
@@ -2190,8 +2296,8 @@
 /turf/simulated/floor/tiled/white/airless,
 /area/containment_facility/arrivals_scrub)
 "nKO" = (
-/turf/template_noop,
-/area/containment_facility/arrivals)
+/turf/simulated/floor/tiled/red/airless,
+/area/space)
 "nOA" = (
 /obj/machinery/light{
 	dir = 4
@@ -2290,15 +2396,6 @@
 /turf/simulated/floor/tiled/white/airless,
 /area/containment_facility/subjects_lab)
 "orZ" = (
-/obj/machinery/atmospherics/pipe/simple/hidden/supply{
-	dir = 9
-	},
-/obj/machinery/atmospherics/pipe/simple/hidden/scrubbers{
-	dir = 9
-	},
-/obj/structure/cable/yellow{
-	icon_state = "1-8"
-	},
 /obj/effect/landmark/corpse/containment_facility/research_doctor,
 /turf/simulated/floor/airless,
 /area/containment_facility/common_area)
@@ -2323,7 +2420,7 @@
 /obj/machinery/atmospherics/unary/vent_pump/on{
 	dir = 1
 	},
-/turf/simulated/floor/tiled/full/airless,
+/turf/simulated/floor/tiled/full,
 /area/containment_facility/arrivals)
 "oFZ" = (
 /obj/effect/floor_decal/industrial/warning{
@@ -2529,6 +2626,19 @@
 	dir = 1
 	},
 /obj/effect/decal/cleanable/dirt,
+/obj/effect/decal/cleanable/blood/gibs/body{
+	fleshcolor = "#FFDBAC"
+	},
+/obj/effect/decal/cleanable/blood/splatter{
+	color = "#A10808";
+	icon_state = "mfloor2";
+	pixel_x = 32
+	},
+/obj/effect/decal/cleanable/blood/splatter{
+	color = "#A10808";
+	icon_state = "mfloor6";
+	pixel_y = 8
+	},
 /turf/simulated/floor/tiled/white/airless,
 /area/containment_facility/subjects_lab)
 "pHG" = (
@@ -2546,6 +2656,7 @@
 /obj/machinery/body_scanconsole{
 	dir = 4
 	},
+/obj/effect/landmark/corpse/containment_facility/research_doctor,
 /turf/simulated/floor/tiled/white/airless,
 /area/containment_facility/arrivals_scrub)
 "pMr" = (
@@ -2645,6 +2756,19 @@
 	},
 /turf/simulated/floor/tiled/red/airless,
 /area/containment_facility/arrivals_scrub)
+"qkr" = (
+/obj/machinery/atmospherics/pipe/simple/hidden/supply,
+/obj/machinery/atmospherics/pipe/simple/hidden/scrubbers,
+/obj/structure/cable/yellow{
+	icon_state = "1-2"
+	},
+/obj/structure/cable/yellow{
+	d1 = 1;
+	d2 = 4;
+	icon_state = "1-4"
+	},
+/turf/simulated/floor/tiled/steel/airless,
+/area/containment_facility/access_checkpoint)
 "qog" = (
 /obj/effect/decal/cleanable/dirt,
 /obj/item/broken_bottle{
@@ -2671,6 +2795,9 @@
 	},
 /turf/simulated/wall/titanium_reinforced/containment,
 /area/containment_facility/subjects_lab_decontamination)
+"qxv" = (
+/turf/simulated/floor/tiled/full,
+/area/containment_facility/arrivals)
 "qBG" = (
 /obj/machinery/alarm{
 	pixel_y = 30
@@ -2679,7 +2806,8 @@
 /area/containment_facility/arrivals_scrub)
 "qEf" = (
 /obj/machinery/door/airlock/glass_research{
-	insecure = 0
+	insecure = 0;
+	req_access = list(202)
 	},
 /obj/machinery/atmospherics/pipe/simple/hidden/scrubbers{
 	dir = 4
@@ -2689,6 +2817,16 @@
 	},
 /turf/simulated/floor/reinforced/airless,
 /area/containment_facility/subjects_lab)
+"qEk" = (
+/obj/machinery/porta_turret/xray{
+	health = 0;
+	maxhealth = 0;
+	stat = 1;
+	raised = 1
+	},
+/obj/effect/decal/warning_stripes,
+/turf/simulated/floor/tiled/old_white/airless,
+/area/containment_facility/common_area)
 "qEy" = (
 /obj/machinery/atmospherics/pipe/simple/hidden/supply,
 /obj/machinery/door/airlock/engineering,
@@ -2827,7 +2965,6 @@
 /turf/simulated/floor/reinforced/airless,
 /area/containment_facility/selfdestruct)
 "rrT" = (
-/obj/structure/closet/l3closet/virology,
 /obj/machinery/light/colored/blue{
 	dir = 4
 	},
@@ -3055,16 +3192,18 @@
 /turf/simulated/floor/tiled/white/airless,
 /area/containment_facility/subjects_lab)
 "sFT" = (
-/obj/machinery/door/airlock/highsecurity,
-/obj/machinery/door/blast/regular{
-	id = "lab_blast";
-	name = "Lab Door";
-	dir = 4
+/obj/machinery/door/airlock/highsecurity{
+	req_access = list(301)
 	},
 /obj/machinery/atmospherics/pipe/simple/hidden/scrubbers,
 /obj/machinery/atmospherics/pipe/simple/hidden/supply,
 /obj/structure/cable/yellow{
 	icon_state = "1-2"
+	},
+/obj/machinery/door/blast/regular{
+	id = "lab_blast";
+	name = "Lab Door";
+	dir = 4
 	},
 /turf/simulated/floor/reinforced/airless,
 /area/containment_facility/subjects_lab_decontamination)
@@ -3090,6 +3229,15 @@
 	},
 /turf/simulated/floor/reinforced/airless,
 /area/containment_facility/selfdestruct)
+"sPv" = (
+/obj/machinery/atmospherics/pipe/simple/hidden/scrubbers,
+/obj/machinery/atmospherics/pipe/simple/hidden/supply,
+/obj/effect/decal/cleanable/dirt,
+/obj/effect/decal/cleanable/blood/splatter{
+	color = "#A10808"
+	},
+/turf/simulated/floor/reinforced/airless,
+/area/containment_facility/subjects_lab)
 "sTh" = (
 /obj/effect/map_effect/window_spawner/full/borosilicate/reinforced/firedoor,
 /turf/simulated/floor/reinforced/airless,
@@ -3158,6 +3306,19 @@
 	},
 /turf/simulated/floor/tiled/steel/airless,
 /area/containment_facility/access_checkpoint)
+"tmy" = (
+/obj/machinery/door/airlock/external{
+	has_set_boltlight = 1;
+	locked = 1;
+	securitylock = 1;
+	atmos_canpass = 4;
+	hatch_colour = "#ff7d7d"
+	},
+/obj/structure/cable/yellow{
+	icon_state = "4-8"
+	},
+/turf/simulated/floor/tiled/red/airless,
+/area/containment_facility/access_checkpoint)
 "tnI" = (
 /obj/machinery/atmospherics/pipe/manifold/hidden/supply,
 /obj/machinery/atmospherics/pipe/simple/hidden/scrubbers{
@@ -3218,11 +3379,12 @@
 /turf/simulated/floor/tiled/yellow/airless,
 /area/containment_facility/engineering)
 "tIA" = (
-/obj/machinery/button/remote/blast_door{
-	dir = 8;
+/obj/machinery/button/remote/blast_door/containment_facility{
 	id = "lab_blast";
 	name = "Lab Access Blast";
-	pixel_x = 25
+	dir = 8;
+	pixel_x = 25;
+	req_access = list(202)
 	},
 /turf/simulated/floor/tiled/old_white/airless,
 /area/containment_facility/common_area)
@@ -3266,7 +3428,8 @@
 	check_arrest = 0;
 	check_records = 0;
 	pixel_y = 0;
-	pixel_x = 29
+	pixel_x = 29;
+	req_access = list(301)
 	},
 /obj/machinery/atmospherics/pipe/simple/hidden/scrubbers{
 	dir = 10
@@ -3310,7 +3473,8 @@
 	},
 /obj/effect/decal/fake_object{
 	icon = 'icons/mob/npc/alienqueen.dmi';
-	icon_state = "queen_dead"
+	icon_state = "queen_dead";
+	name = "???"
 	},
 /obj/effect/decal/cleanable/dirt,
 /turf/simulated/floor/tiled/full/airless,
@@ -3361,11 +3525,11 @@
 	},
 /area/containment_facility/engineering)
 "uwL" = (
-/obj/effect/landmark/corpse/containment_facility/research_doctor,
 /obj/effect/decal/cleanable/blood/splatter{
 	color = "#A10808"
 	},
 /obj/effect/decal/cleanable/vomit,
+/obj/effect/landmark/corpse/containment_facility/containment_security_commander,
 /turf/simulated/floor/tiled/steel/airless,
 /area/containment_facility/access_checkpoint)
 "uzo" = (
@@ -3487,7 +3651,8 @@
 /obj/effect/decal/fake_object{
 	icon = 'icons/obj/nuke.dmi';
 	icon_state = "idle";
-	density = 1
+	density = 1;
+	name = "Termination Device"
 	},
 /turf/simulated/floor/reinforced/airless,
 /area/containment_facility/selfdestruct)
@@ -3778,6 +3943,14 @@
 /obj/effect/map_effect/window_spawner/full/reinforced/firedoor,
 /turf/simulated/floor/tiled/old_white/airless,
 /area/containment_facility/common_area)
+"wDH" = (
+/obj/effect/decal/cleanable/dirt,
+/obj/effect/decal/cleanable/blood/splatter{
+	color = "#A10808";
+	icon_state = "mfloor2"
+	},
+/turf/simulated/floor/reinforced/airless,
+/area/containment_facility/subjects_lab)
 "wFR" = (
 /obj/machinery/atmospherics/pipe/simple/visible/green{
 	dir = 9
@@ -3805,8 +3978,9 @@
 /obj/machinery/atmospherics/pipe/simple/hidden/supply{
 	dir = 4
 	},
-/obj/item/hullbeacon/red{
-	pixel_y = -12
+/obj/machinery/light/small/red{
+	dir = 2;
+	color = "#FA8282"
 	},
 /turf/simulated/floor/tiled/old_white/airless,
 /area/containment_facility/common_area)
@@ -3895,6 +4069,29 @@
 	},
 /turf/simulated/floor/plating,
 /area/containment_facility/engineering)
+"xfx" = (
+/obj/machinery/atmospherics/pipe/simple/hidden/supply,
+/obj/machinery/atmospherics/pipe/simple/hidden/scrubbers,
+/obj/structure/cable/yellow{
+	icon_state = "1-2"
+	},
+/obj/effect/decal/cleanable/dirt,
+/obj/effect/decal/cleanable/blood/splatter{
+	color = "#A10808"
+	},
+/turf/simulated/floor/reinforced/airless,
+/area/containment_facility/subjects_lab)
+"xgj" = (
+/obj/effect/decal/cleanable/dirt,
+/obj/effect/decal/cleanable/blood/splatter{
+	color = "#A10808";
+	pixel_x = -37;
+	layer = 2.999;
+	icon_state = "mfloor5";
+	pixel_y = -4
+	},
+/turf/simulated/floor/tiled/white/airless,
+/area/containment_facility/subjects_lab)
 "xik" = (
 /obj/effect/floor_decal/industrial/warning,
 /obj/structure/tank_wall/nitrogen{
@@ -3950,7 +4147,9 @@
 /turf/simulated/wall/titanium_reinforced/containment,
 /area/containment_facility/arrivals_scrub)
 "xGj" = (
-/obj/machinery/door/airlock/highsecurity,
+/obj/machinery/door/airlock/highsecurity{
+	req_access = list(301)
+	},
 /obj/machinery/atmospherics/pipe/simple/hidden/scrubbers{
 	dir = 4
 	},
@@ -3991,7 +4190,8 @@
 	id = "selfdestruct_blast";
 	name = "Lab Access Blast";
 	pixel_x = 25;
-	color = "#FF5555"
+	color = "#FF5555";
+	req_access = list(301)
 	},
 /turf/simulated/floor/reinforced/airless,
 /area/containment_facility/subjects_lab)
@@ -4003,7 +4203,8 @@
 	check_arrest = 0;
 	check_records = 0;
 	pixel_y = 0;
-	pixel_x = 29
+	pixel_x = 29;
+	req_access = list(301)
 	},
 /turf/simulated/floor/tiled/red/airless,
 /area/containment_facility/access_checkpoint)
@@ -27048,7 +27249,7 @@ lDa
 lDa
 lDa
 hae
-lDa
+pag
 fxy
 gIi
 lDa
@@ -29111,26 +29312,26 @@ xRX
 xRX
 xRX
 xRX
+xRX
+xRX
+xRX
+xRX
+xRX
 fxK
 fxK
-xRX
-xRX
-xRX
-xRX
-xRX
-xRX
-xRX
-xRX
-xRX
-xRX
-xRX
-xRX
-xRX
-xRX
-xRX
-xRX
-xRX
-xRX
+fxK
+fxK
+fxK
+fxK
+fxK
+fxK
+fxK
+fxK
+fxK
+fxK
+fxK
+fxK
+fxK
 xRX
 xRX
 xRX
@@ -29387,7 +29588,7 @@ eDB
 eDB
 eDB
 eDB
-xRX
+fxK
 xRX
 xRX
 xRX
@@ -29644,7 +29845,7 @@ hxR
 hku
 sEb
 eDB
-xRX
+fxK
 xRX
 xRX
 xRX
@@ -29897,11 +30098,11 @@ nTD
 eDB
 iGJ
 bao
-bao
+xgj
 bao
 xjH
 eDB
-xRX
+fxK
 xRX
 xRX
 xRX
@@ -30158,7 +30359,7 @@ pby
 bao
 aDM
 eDB
-xRX
+fxK
 xRX
 xRX
 xRX
@@ -30415,7 +30616,7 @@ uAZ
 pHb
 wLr
 eDB
-xRX
+fxK
 xRX
 xRX
 xRX
@@ -30672,7 +30873,7 @@ ufY
 eDB
 onB
 eDB
-xRX
+fxK
 xRX
 xRX
 xRX
@@ -30929,7 +31130,7 @@ sqg
 tkx
 kCm
 eDB
-xRX
+fxK
 xRX
 xRX
 xRX
@@ -31186,7 +31387,7 @@ sqg
 bnX
 fdx
 eDB
-xRX
+fxK
 xRX
 xRX
 xRX
@@ -31443,7 +31644,7 @@ ufY
 eDB
 eDB
 eDB
-xRX
+fxK
 xRX
 xRX
 xRX
@@ -31692,7 +31893,7 @@ kyr
 kyr
 pZo
 kyr
-kyr
+sPv
 kyr
 kyr
 kyr
@@ -31700,7 +31901,7 @@ nSA
 gGU
 gGU
 eDB
-xRX
+fxK
 xRX
 xRX
 xRX
@@ -31945,7 +32146,7 @@ gGU
 gGU
 gGU
 gGU
-gGU
+qQB
 xby
 gGU
 gGU
@@ -31953,11 +32154,11 @@ gGU
 gGU
 gGU
 mcj
-qQB
+wDH
 sZQ
 gGU
 eDB
-xRX
+fxK
 xRX
 xRX
 xRX
@@ -32214,7 +32415,7 @@ gGU
 gGU
 gGU
 eDB
-xRX
+fxK
 xRX
 xRX
 xRX
@@ -32471,7 +32672,7 @@ lYZ
 gGU
 gGU
 eDB
-xRX
+fxK
 xRX
 xRX
 xRX
@@ -32693,7 +32894,7 @@ ifN
 ifN
 fxK
 wWd
-dAs
+qEk
 hZI
 jyF
 kui
@@ -32728,7 +32929,7 @@ kCX
 gGU
 gGU
 eDB
-xRX
+fxK
 xRX
 xRX
 xRX
@@ -32972,7 +33173,7 @@ qeh
 suu
 gGU
 gGU
-xby
+esS
 gGU
 gpB
 lHv
@@ -32985,7 +33186,7 @@ eDB
 eDB
 eDB
 xpS
-xRX
+fxK
 xRX
 xRX
 xRX
@@ -33229,7 +33430,7 @@ icS
 etK
 bWR
 cIA
-cIA
+xfx
 cIA
 woq
 ucc
@@ -33242,7 +33443,7 @@ dxP
 ocs
 dxP
 eDB
-xRX
+fxK
 xRX
 xRX
 xRX
@@ -33481,7 +33682,7 @@ ufj
 eYL
 vbg
 hRb
-gGU
+ghp
 gGU
 gGU
 ufY
@@ -33491,7 +33692,7 @@ aKe
 bnR
 gGU
 gGU
-gGU
+qQB
 sTh
 dxP
 cFV
@@ -33499,7 +33700,7 @@ cFV
 cFV
 dxP
 eDB
-xRX
+fxK
 xRX
 xRX
 xRX
@@ -33756,7 +33957,7 @@ tCG
 tCG
 dxP
 eDB
-xRX
+fxK
 xRX
 xRX
 xRX
@@ -33982,7 +34183,7 @@ ngz
 hZI
 eHu
 wBq
-aGo
+fNK
 eHu
 eHu
 eHu
@@ -34005,7 +34206,7 @@ gGU
 mbr
 erp
 kyr
-kyr
+sPv
 tjF
 mBb
 uPD
@@ -34013,7 +34214,7 @@ cFV
 cFV
 dxP
 eDB
-xRX
+fxK
 xRX
 xRX
 xRX
@@ -34239,7 +34440,7 @@ rWn
 mfm
 eHu
 wBq
-aGo
+fNK
 hRa
 eHu
 gYm
@@ -34270,7 +34471,7 @@ dxP
 dxP
 dxP
 eDB
-xRX
+fxK
 xRX
 xRX
 xRX
@@ -34501,7 +34702,7 @@ eHu
 eHu
 tIA
 eHu
-eHu
+nkW
 eHu
 lFI
 xRX
@@ -34517,7 +34718,7 @@ sTh
 gGU
 gGU
 wno
-gGU
+qQB
 gGU
 gGU
 sTh
@@ -34527,7 +34728,7 @@ cFV
 cFV
 dxP
 eDB
-xRX
+fxK
 xRX
 xRX
 xRX
@@ -34784,7 +34985,7 @@ tCG
 tCG
 dxP
 eDB
-xRX
+fxK
 xRX
 xRX
 xRX
@@ -35035,13 +35236,13 @@ xUe
 eQk
 iGL
 eDB
-fNK
+dxP
 cFV
 cFV
 cFV
 dxP
 eDB
-xRX
+fxK
 xRX
 xRX
 xRX
@@ -35298,7 +35499,7 @@ eDB
 eDB
 eDB
 eDB
-xRX
+fxK
 xRX
 xRX
 xRX
@@ -35548,14 +35749,14 @@ sPf
 cXk
 dXE
 lfB
-xRX
-xRX
-xRX
-xRX
-xRX
-xRX
-xRX
-xRX
+fxK
+fxK
+fxK
+fxK
+fxK
+fxK
+fxK
+fxK
 xRX
 xRX
 xRX
@@ -35805,7 +36006,7 @@ gMF
 hNP
 eGL
 lfB
-xRX
+fxK
 xRX
 xRX
 xRX
@@ -36049,7 +36250,7 @@ beA
 wYF
 muQ
 eWq
-oHt
+mTU
 pJv
 hqT
 oYK
@@ -36062,7 +36263,7 @@ uHR
 hNP
 eGL
 lfB
-xRX
+fxK
 xRX
 xRX
 xRX
@@ -36319,7 +36520,7 @@ hNP
 hNP
 hNP
 lfB
-xRX
+fxK
 xRX
 xRX
 xRX
@@ -36576,7 +36777,7 @@ hNP
 etR
 jmo
 lfB
-xRX
+fxK
 xRX
 xRX
 xRX
@@ -36833,7 +37034,7 @@ lfB
 lfB
 lfB
 lfB
-xRX
+fxK
 xRX
 xRX
 xRX
@@ -37077,20 +37278,20 @@ fzG
 oYK
 qBG
 rXx
-bcU
+oHt
 rrT
 bcU
 oYK
-xRX
-xRX
-xRX
-xRX
-xRX
-xRX
-xRX
-xRX
-xRX
-xRX
+fxK
+fxK
+fxK
+fxK
+fxK
+fxK
+fxK
+fxK
+fxK
+fxK
 xRX
 xRX
 xRX
@@ -38620,7 +38821,7 @@ amT
 fET
 pSG
 eBI
-dmM
+qxv
 ugt
 amT
 xRX
@@ -38872,7 +39073,7 @@ vUq
 vUq
 dWK
 srT
-kQA
+qkr
 ipm
 cPq
 raO
@@ -39129,7 +39330,7 @@ vof
 vHs
 vEc
 vUq
-nDh
+frg
 amT
 exA
 udZ
@@ -39386,7 +39587,7 @@ gfL
 gfL
 gfL
 gfL
-gfL
+tmy
 amT
 amT
 amT
@@ -39642,10 +39843,10 @@ xRX
 xRX
 xRX
 xRX
-xRX
-xRX
-xRX
-xRX
+fxK
+fEy
+kNk
+fxK
 xRX
 amT
 ams
@@ -39899,10 +40100,10 @@ xRX
 xRX
 xRX
 xRX
-xRX
-xRX
-xRX
-xRX
+fxK
+nKO
+nKO
+fxK
 xRX
 amT
 ams
@@ -40156,14 +40357,14 @@ xRX
 xRX
 xRX
 xRX
-xRX
-xRX
-xRX
-xRX
+fxK
+fxK
+bPQ
+fxK
 xRX
 amT
-bPQ
-nKO
+ams
+ams
 amT
 xRX
 xRX

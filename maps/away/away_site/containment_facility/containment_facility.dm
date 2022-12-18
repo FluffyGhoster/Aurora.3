@@ -10,7 +10,7 @@
 
 /area/containment_facility
 	name = "Containment Facility"
-	requires_power = FALSE
+	requires_power = TRUE
 
 /area/containment_facility/arrivals
 	name = "Containment Facility Arrivals"
@@ -58,5 +58,31 @@
 	corpsesuit = /obj/item/clothing/suit/storage/toggle/labcoat
 	corpseback = /obj/item/storage/backpack/medic
 	corpseshoes = /obj/item/clothing/shoes/science
-	corpseid = 1
+	corpseid = 0
 	corpseidjob = "Research Doctor"
+
+/obj/effect/landmark/corpse/containment_facility/containment_security_commander
+	corpseuniform = /obj/item/clothing/under/rank/head_of_security
+	corpsemask = /obj/item/clothing/mask/gas/tactical
+	corpsegloves = /obj/item/clothing/gloves/swat/tactical
+	corpsehelmet = /obj/item/clothing/head/helmet/tactical
+	corpsesuit = /obj/item/clothing/suit/armor/carrier/hos
+	corpseshoes = /obj/item/clothing/shoes/swat
+	corpseradio = /obj/item/device/radio/headset
+	corpseidjob = "Containment Unit Commander"
+	corpseid = 0
+
+/var/const/access_containment_security = 301
+/datum/access/access_containment_security
+	id = access_containment_security
+	access_type = ACCESS_TYPE_CENTCOM
+
+/obj/machinery/button/remote/blast_door/containment_facility
+	name = "Containment Facility Blast door"
+
+
+/obj/machinery/button/remote/blast_door/containment_facility/attack_hand(mob/user as mob)
+	playsound(src, 'sound/ambience/firealarm.ogg', 95, 0)
+	src.visible_message(SPAN_DANGER(FONT_LARGE("Attention! Laboratories access cycling procedure initiated!")))
+	sleep(19*10)	//Sleep while the sound plays before continuing, as I found no direct way to await the playback completion before resuming
+	. = ..()
