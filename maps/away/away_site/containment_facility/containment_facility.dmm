@@ -3384,7 +3384,7 @@
 	name = "Lab Access Blast";
 	dir = 8;
 	pixel_x = 25;
-	req_access = list(202)
+	req_one_access = list(202)
 	},
 /turf/simulated/floor/tiled/old_white/airless,
 /area/containment_facility/common_area)

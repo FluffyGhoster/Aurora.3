@@ -78,11 +78,15 @@
 	access_type = ACCESS_TYPE_CENTCOM
 
 /obj/machinery/button/remote/blast_door/containment_facility
+	var/inUse = 0
 	name = "Containment Facility Blast door"
 
 
 /obj/machinery/button/remote/blast_door/containment_facility/attack_hand(mob/user as mob)
-	playsound(src, 'sound/ambience/firealarm.ogg', 95, 0)
-	src.visible_message(SPAN_DANGER(FONT_LARGE("Attention! Laboratories access cycling procedure initiated!")))
-	sleep(19*10)	//Sleep while the sound plays before continuing, as I found no direct way to await the playback completion before resuming
-	. = ..()
+	if(!inUse)
+		inUse = 1
+		playsound(src, 'sound/ambience/firealarm.ogg', 95, 0)
+		src.visible_message(SPAN_DANGER(FONT_LARGE("Attention! Laboratories access cycling procedure initiated!")))
+		sleep(19*10)	//Sleep while the sound plays before continuing, as I found no direct way to await the playback completion before resuming
+		. = ..()
+		inUse = 0
