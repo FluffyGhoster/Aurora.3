@@ -37,6 +37,17 @@
 /area/containment_facility/common_area
 	name = "Containment Facility Common Area"
 
+/area/containment_facility/exterior
+	name = "Containment Facility - Exterior (DO NOT ENCROACH ON LANDING PLACES)"
+	icon_state = "exterior"
+	base_turf = /turf/space
+	dynamic_lighting = TRUE
+	requires_power = FALSE
+	has_gravity = FALSE
+	no_light_control = TRUE
+	allow_nightmode = FALSE
+	ambience = AMBIENCE_SPACE
+
 /turf/simulated/wall/titanium_reinforced/containment/Initialize(mapload)
 	. = ..(mapload, MATERIAL_ELEVATOR, MATERIAL_ELEVATOR)
 
