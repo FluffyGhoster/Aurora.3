@@ -21,9 +21,9 @@ var/singleton/observ/dir_set/dir_set_event = new()
 	if(. && istype(dir_changer.loc, /atom/movable))	// We don't care about registering to turfs.
 		register(dir_changer.loc, dir_changer, TYPE_PROC_REF(/atom, recursive_dir_set))
 
-/*********************
-* Direction Handling *
-*********************/
+/**********************
+* Direction Handling  *
+**********************/
 
 /atom/set_dir()
 	var/old_dir = dir
