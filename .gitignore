@@ -12,9 +12,7 @@ data/
 cfg/
 build_log.txt
 
-__pycache__/
-*.py[cod]
-*$py.class
+
 /.atom-build.json
 .vscode/*
 !.vscode/launch.json
@@ -25,3 +23,32 @@ __pycache__/
 
 define_sanity_output.txt
 tools/bootstrap/.cache/venv/
+
+#Ignore compiled files and other files generated during compilation.
+*.mdme
+*.mdme.*
+*.dmb
+*.rsc
+*.m.dme
+*.test.dme
+*.lk
+*.int
+*.backup
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Windows image file caches
+Thumbs.db
+ehthumbs.db
+
+# Folder config file
+Desktop.ini
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+# Windows shortcuts
+*.lnk
