@@ -1,6 +1,9 @@
 # merger hooks, run tools/hooks/install.bat or install.sh to set up
-*.dmm text merge=dmm eol=crlf
+*.dmm text merge=dmm eol=lf
 *.dmi binary merge=dmi
+
+## Force tab indents on dm files
+*.dm whitespace=indent-with-non-tab
 
 # force changelog merging to use union
 html/changelog.html merge=union
@@ -27,28 +30,30 @@ html/changelog.html merge=union
 *.xcf binary
 *.xlsx binary
 
-*.awk text
-*.bat text
-*.conf text
-*.cpp text
-*.cs text
-*.css text
-*.dm text
-*.dmf text
+*.awk text eol=lf
+*.bat text eol=lf
+*.conf text eol=lf
+*.cpp text eol=lf
+*.cs text eol=lf
+*.css text eol=lf
+*.dm text eol=lf
+*.dmf text eol=lf
 *.gitkeep text
 *.hook text
-*.html text
+*.html text eol=lf
 *.java text
-*.js text
-*.json text
+*.js text eol=lf
+*.json text eol=lf
 *.log text
 *.map text
 *.md text
 *.php text
-*.py text
+*.py text eol=lf
 *.scss text
-*.sh text
-*.sql text
+*.sh text eol=lf
+*.sql text eol=lf
 *.tmpl text
-*.txt text
-*.vue text
+*.txt text eol=lf
+*.vue text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
