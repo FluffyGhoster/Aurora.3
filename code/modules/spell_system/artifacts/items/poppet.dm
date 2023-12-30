@@ -16,7 +16,7 @@
 	return ..()
 
 /obj/item/poppet/examine(mob/user)
-	..(user)
+	. = ..()
 	if(countenance)
 		to_chat(user, "<span class='notice'>It is modeled after a [countenance].</span>")
 
@@ -28,7 +28,7 @@
 	if(A.blood_DNA)
 		var/marked = pick(A.blood_DNA)
 
-		for(var/mob/living/carbon/human/H in mob_list)
+		for(var/mob/living/carbon/human/H in GLOB.mob_list)
 			if(H.dna.unique_enzymes == marked)
 				target = WEAKREF(H)
 				countenance = H.dna.species
@@ -54,7 +54,7 @@
 		if(target_zone == BP_R_LEG || target_zone == BP_L_LEG)
 			to_chat(user, "<span class='notice'>You move \the [src]'s legs around.</span>")
 			if(H.canmove && !H.restrained() && !(istype(H.loc, /turf/space)))
-				step(H, pick(cardinal))
+				step(H, pick(GLOB.cardinal))
 
 		if(target_zone == BP_L_HAND || target_zone == BP_L_ARM)
 			to_chat(user, "<span class='notice'>You twist \the [src]'s left arm.</span>")
@@ -69,7 +69,7 @@
 			H.confused += 10
 			H.stuttering += 5
 			to_chat(H, "<span class='danger'>You suddenly feel as if your head was hit by something!</span>")
-			playsound(get_turf(H), /decl/sound_category/punch_sound, 50, 1, -1)
+			playsound(get_turf(H), /singleton/sound_category/punch_sound, 50, 1, -1)
 
 		cooldown = world.time + cooldown_time
 
@@ -91,8 +91,7 @@
 		if(istype(W, /obj/item/device/flashlight))
 			to_chat(H, "<span class='warning'>You direct \the [W] towards \the [src]'s eyes!</span>")
 			playsound(get_turf(H), 'sound/items/flashlight.ogg', 50, 1, -1)
-			H.flash_eyes()
-			H.eye_blurry = 5
+			H.flash_act()
 			return TRUE
 
 		if(W.iscoil())
@@ -110,7 +109,7 @@
 
 		if(W.edge)
 			to_chat(H, "<span class='warning'>You stab \the [src] with \the [W]!</span>")
-			H.apply_damage(2, BRUTE, target_zone, damage_flags = DAM_EDGE)
+			H.apply_damage(2, DAMAGE_BRUTE, target_zone, damage_flags = DAMAGE_FLAG_EDGE)
 			playsound(get_turf(H), 'sound/weapons/bladeslice.ogg', 50, 1, -1)
 			if(H.can_feel_pain())
 				var/obj/item/organ/external/organ = H.get_organ(target_zone)
@@ -121,9 +120,11 @@
 	..()
 	var/mob/living/carbon/human/H = target.resolve()
 	if(H)
-		H.throw_at(get_edge_target_turf(H,pick(alldirs)), 5, 1)
+		H.throw_at(get_edge_target_turf(H,pick(GLOB.alldirs)), 5, 1)
 
 /obj/item/poppet/emp_act(severity)
+	. = ..()
+
 	var/mob/living/carbon/human/H = target.resolve()
 	if(H)
 		H.emp_act(severity)
@@ -142,7 +143,7 @@
 /obj/item/poppet/bullet_act(var/obj/item/projectile/Proj)
 	var/mob/living/carbon/human/H = target.resolve()
 	if(H)
-		H.apply_damage(Proj.damage, PAIN)
+		H.apply_damage(Proj.damage, DAMAGE_PAIN)
 
 /obj/item/poppet/fire_act()
 	var/mob/living/carbon/human/H = target.resolve()

@@ -98,17 +98,18 @@
 		playsound(get_turf(src), 'sound/effects/bang.ogg', 50, 1)
 
 /obj/machinery/power/am_control_unit/emp_act(severity)
+	. = ..()
+
 	switch(severity)
-		if(1)
+		if(EMP_HEAVY)
 			if(active)
 				toggle_power()
 			stability -= rand(15, 30)
-		if(2)
+		if(EMP_LIGHT)
 			if(active)
 				toggle_power()
 			stability -= rand(10, 20)
 	check_stability()
-	..()
 
 /obj/machinery/power/am_control_unit/ex_act(severity)
 	switch(severity)
@@ -223,12 +224,12 @@
 			if(AMS.processing)
 				AMS.shutdown_core()
 			AMS.control_unit = null
-			addtimer(CALLBACK(src, .proc/ams_do_scan, AMS), 1 SECOND)
+			addtimer(CALLBACK(src, PROC_REF(ams_do_scan), AMS), 1 SECOND)
 		LAZYCLEARLIST(linked_shielding)
 	else
 		for(var/obj/machinery/am_shielding/AMS in linked_shielding)
 			AMS.update_icon()
-	addtimer(CALLBACK(src, .proc/clear_shield_icon_delay), 2 SECONDS)
+	addtimer(CALLBACK(src, PROC_REF(clear_shield_icon_delay)), 2 SECONDS)
 
 /obj/machinery/power/am_control_unit/proc/ams_do_scan(var/obj/machinery/am_shielding/AMS)
 	AMS.controllerscan()

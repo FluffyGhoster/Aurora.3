@@ -64,7 +64,7 @@
 	user.do_attack_animation(src, W)
 	//Calculate damage
 	var/aforce = W.force
-	if(W.damtype == BRUTE || W.damtype == BURN)
+	if(W.damtype == DAMAGE_BRUTE || W.damtype == DAMAGE_BURN)
 		health -= aforce
 
 	//Play a fitting sound
@@ -95,10 +95,13 @@
 	return
 
 /obj/machinery/shield/emp_act(severity)
+	. = ..()
+
 	switch(severity)
-		if(1)
+		if(EMP_HEAVY)
 			qdel(src)
-		if(2)
+
+		if(EMP_LIGHT)
 			if(prob(50))
 				qdel(src)
 
@@ -136,7 +139,7 @@
 	density = TRUE
 	opacity = FALSE
 	anchored = FALSE
-	req_access = list(access_engine)
+	req_access = list(ACCESS_ENGINE)
 	var/health = 100
 	var/active = FALSE
 	var/malfunction = FALSE //Malfunction causes parts of the shield to slowly dissapate
@@ -256,12 +259,14 @@
 	return
 
 /obj/machinery/shieldgen/emp_act(severity)
+	. = ..()
+
 	switch(severity)
-		if(1)
+		if(EMP_HEAVY)
 			src.health /= 2 //cut health in half
 			malfunction = TRUE
 			locked = pick(0,1)
-		if(2)
+		if(EMP_LIGHT)
 			if(prob(50))
 				src.health *= 0.3 //chop off a third of the health
 				malfunction = TRUE

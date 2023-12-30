@@ -51,6 +51,9 @@
 		var/mob/living/heavy_vehicle/HV = user
 		if(istype(W, /obj/item/mecha_equipment/clamp))
 			var/obj/item/mecha_equipment/clamp/CL = W
+			if(!length(CL.carrying))
+				to_chat(user, SPAN_WARNING("\The [CL] is empty."))
+				return TRUE
 			if(istype(CL.carrying[1], /obj/item/ship_ammunition))
 				var/obj/item/ship_ammunition/SA = CL.carrying[1]
 				return load_ammo(SA, HV)
@@ -73,7 +76,7 @@
 	if(SA.caliber == weapon.get_caliber())
 		if(SA.can_be_loaded())
 			visible_message(SPAN_NOTICE("[H] begins loading \the [SA] into \the [src]..."))
-			if(do_after(H, weapon.load_time))
+			if(do_after(H, weapon.load_time, src, DO_UNIQUE))
 				if(weapon.load_ammunition(SA, H))
 					visible_message(SPAN_NOTICE("[H] loads \the [SA] into \the [src]!"))
 					playsound(src, 'sound/weapons/ammo_load.ogg')

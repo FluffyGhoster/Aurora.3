@@ -14,17 +14,30 @@
 
 	var/datum/pipe_network/network
 
-	var/on = 0
 	use_power = POWER_USE_OFF
 	level = 1
+
+/obj/machinery/atmospherics/portables_connector/fuel
+	icon_state = "map_connector-fuel"
+	icon_connect_type = "-fuel"
+	connect_types = CONNECT_TYPE_FUEL
+
+/obj/machinery/atmospherics/portables_connector/aux
+	icon_state = "map_connector-aux"
+	icon_connect_type = "-aux"
+	connect_types = CONNECT_TYPE_AUX
 
 
 /obj/machinery/atmospherics/portables_connector/Initialize()
 	initialize_directions = dir
-	. = ..()
+	..()
+	return INITIALIZE_HINT_LATELOAD
+
+/obj/machinery/atmospherics/portables_connector/LateInitialize()
+	toggle_process()
 
 /obj/machinery/atmospherics/portables_connector/update_icon()
-	icon_state = "connector"
+	icon_state = "connector" + icon_connect_type
 
 /obj/machinery/atmospherics/portables_connector/update_underlays()
 	if(..())
@@ -32,21 +45,20 @@
 		var/turf/T = get_turf(src)
 		if(!istype(T))
 			return
-		add_underlay(T, node, dir)
+		add_underlay(T, node, dir, node?.icon_connect_type)
 
 /obj/machinery/atmospherics/portables_connector/hide(var/i)
 	update_underlays()
 
+/obj/machinery/atmospherics/portables_connector/proc/toggle_process()
+	if(connected_device)
+		START_PROCESSING_MACHINE(src, MACHINERY_PROCESS_SELF)
+	else
+		STOP_PROCESSING_MACHINE(src, MACHINERY_PROCESS_SELF)
+
 /obj/machinery/atmospherics/portables_connector/process()
-	..()
-	if(!on)
-		return
-	if(!connected_device)
-		on = 0
-		return
 	if(network)
 		network.update = 1
-	return 1
 
 // Housekeeping and pipe network stuff below
 /obj/machinery/atmospherics/portables_connector/network_expand(datum/pipe_network/new_network, obj/machinery/atmospherics/pipe/reference)

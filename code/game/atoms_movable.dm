@@ -1,14 +1,21 @@
 /atom/movable
 	layer = 3
+	glide_size = 6
+	animate_movement = SLIDE_STEPS
+
 	var/last_move = null
 	var/anchored = 0
 	var/movable_flags
 
-	var/icon_scale_x = 1 // Used to scale icons up or down horizonally in update_transform().
-	var/icon_scale_y = 1 // Used to scale icons up or down vertically in update_transform().
-	var/icon_rotation = 0 // Used to rotate icons in update_transform()
+	///Used to scale icons up or down horizonally in update_transform().
+	var/icon_scale_x = 1
 
-	// var/elevation = 2    - not used anywhere
+	///Used to scale icons up or down vertically in update_transform().
+	var/icon_scale_y = 1
+
+	///Used to rotate icons in update_transform()
+	var/icon_rotation = 0
+
 	var/move_speed = 10
 	var/l_move_time = 1
 	var/throwing = 0
@@ -17,10 +24,15 @@
 	var/throw_speed = 2
 	var/throw_range = 7
 	var/moved_recently = 0
-	var/mob/pulledby = null
-	var/item_state = null // Base name of the image used for when the item is in someone's hand. Suffixes are added to this. Doubles as legacy overlay_state.
-	var/overlay_state = null // Base name of the image used for when the item is worn. Suffixes are added to this. Important for icon flipping as _flip is added at the end of the value.
-	//Also used on holdable mobs for the same info related to their held version
+	var/atom/movable/pulledby = null
+
+	///Base name of the image used for when the item is in someone's hand. Suffixes are added to this. Doubles as legacy overlay_state.
+	var/item_state = null
+
+	///Base name of the image used for when the item is worn. Suffixes are added to this. Important for icon flipping as _flip is added at the end of the value.
+	var/overlay_state = null
+
+	///Also used on holdable mobs for the same info related to their held version
 	var/does_spin = TRUE // Does the atom spin when thrown (of course it does :P)
 
 	var/can_hold_mob = FALSE
@@ -42,20 +54,24 @@
 	..()*/
 
 /atom/movable/Destroy()
-	if (important_recursive_contents && (important_recursive_contents[RECURSIVE_CONTENTS_CLIENT_MOBS] || important_recursive_contents[RECURSIVE_CONTENTS_HEARING_SENSITIVE]))
+	if (HAS_SPATIAL_GRID_CONTENTS(src))
 		SSspatial_grid.force_remove_from_cell(src)
 
 	LAZYCLEARLIST(contained_mobs)
 	LAZYCLEARLIST(important_recursive_contents)
+
+	GLOB.moved_event.unregister_all_movement(loc, src)
+
 	. = ..()
 
 	for(var/atom/movable/AM in contents)
 		qdel(AM)
 	loc = null
 	screen_loc = null
-	if (pulledby)
-		if (pulledby.pulling == src)
-			pulledby.pulling = null
+	if(ismob(pulledby))
+		var/mob/M = pulledby
+		if(M.pulling == src)
+			M.pulling = null
 		pulledby = null
 
 	if (bound_overlay)
@@ -177,9 +193,9 @@
 		minor_dist = dist_x
 
 	while(src && target && src.throwing && istype(src.loc, /turf) \
-		  && ((abs(target.x - src.x)+abs(target.y - src.y) > 0 && dist_travelled < range) \
-		  	   || (a && a.has_gravity == 0) \
-			   || istype(src.loc, /turf/space)))
+			&& ((abs(target.x - src.x)+abs(target.y - src.y) > 0 && dist_travelled < range) \
+				|| (a && a.has_gravity == 0) \
+				|| istype(src.loc, /turf/space)))
 		// only stop when we've gone the whole distance (or max throw range) and are on a non-space tile, or hit something, or hit the end of the map, or someone picks it up
 		var/atom/step
 		if(error >= 0)
@@ -249,7 +265,7 @@
 	if(anchored)
 		return
 
-	if(!universe.OnTouchMapEdge(src))
+	if(!GLOB.universe.OnTouchMapEdge(src))
 		return
 
 	if(current_map.use_overmap)
@@ -336,8 +352,8 @@
 	. = ..()
 	if (.)
 		// Events.
-		if (moved_event.listeners_assoc[src])
-			moved_event.raise_event(src, old_loc, loc)
+		if (GLOB.moved_event.global_listeners[src])
+			GLOB.moved_event.raise_event(src, old_loc, loc)
 
 		// Lighting.
 		if (light_sources)
@@ -363,7 +379,7 @@
 	update_grid_location(old_loc, src)
 
 /atom/movable/proc/update_grid_location(atom/old_loc)
-	if(!HAS_SPATIAL_GRID_CONTENTS(src))
+	if(!HAS_SPATIAL_GRID_CONTENTS(src) || SSspatial_grid.init_state < SS_INITSTATE_DONE)
 		return
 
 	var/turf/old_turf = get_turf(old_loc)
@@ -391,6 +407,9 @@
 			for (var/atom/movable/location as anything in nested_locs)
 				LAZYREMOVEASSOC(location.important_recursive_contents, channel, gone.important_recursive_contents[channel])
 
+	if(LAZYLEN(gone.stored_chat_text))
+		return_floating_text(gone)
+
 /atom/movable/Entered(atom/movable/arrived, atom/old_loc, list/atom/old_locs)
 	. = ..()
 
@@ -399,6 +418,9 @@
 		for (var/channel in arrived.important_recursive_contents)
 			for (var/atom/movable/location as anything in nested_locs)
 				LAZYORASSOCLIST(location.important_recursive_contents, channel, arrived.important_recursive_contents[channel])
+
+	if (LAZYLEN(arrived.stored_chat_text))
+		give_floating_text(arrived)
 
 //allows this movable to hear and adds itself to the important_recursive_contents list of itself and every movable loc its in
 /atom/movable/proc/become_hearing_sensitive(trait_source = TRAIT_GENERIC)
@@ -429,7 +451,7 @@
 
 	var/turf/our_turf = get_turf(src)
 	if(our_turf && SSspatial_grid.init_state == SS_INITSTATE_DONE)
-		SSspatial_grid.exit_cell(src, our_turf)
+		SSspatial_grid.exit_cell(src, our_turf, RECURSIVE_CONTENTS_HEARING_SENSITIVE)
 	else if(our_turf && SSspatial_grid.init_state != SS_INITSTATE_DONE)
 		SSspatial_grid.remove_from_pre_init_queue(src, RECURSIVE_CONTENTS_HEARING_SENSITIVE)
 
@@ -479,6 +501,28 @@
 
 	for(var/atom/movable/movable_loc as anything in get_nested_locs(src) + src)
 		LAZYREMOVEASSOC(movable_loc.important_recursive_contents, RECURSIVE_CONTENTS_CLIENT_MOBS, former_client.mob)
+
+// This proc adds atom/movables to the AI targetable list, i.e. things that the AI (turrets, hostile animals) will attempt to target
+/atom/movable/proc/add_to_target_grid()
+	for (var/atom/movable/location as anything in get_nested_locs(src) + src)
+		LAZYADDASSOCLIST(location.important_recursive_contents, RECURSIVE_CONTENTS_AI_TARGETS, src)
+
+	var/turf/our_turf = get_turf(src)
+	if(our_turf && SSspatial_grid.init_state == SS_INITSTATE_DONE)
+		SSspatial_grid.enter_cell(src, our_turf)
+
+	else if(our_turf && SSspatial_grid.init_state != SS_INITSTATE_DONE)//SSspatial_grid isnt init'd yet, add ourselves to the queue
+		SSspatial_grid.enter_pre_init_queue(src, RECURSIVE_CONTENTS_AI_TARGETS)
+
+/atom/movable/proc/clear_from_target_grid()
+	var/turf/our_turf = get_turf(src)
+	if(our_turf && SSspatial_grid.init_state == SS_INITSTATE_DONE)
+		SSspatial_grid.exit_cell(src, our_turf, RECURSIVE_CONTENTS_AI_TARGETS)
+	else if(our_turf && SSspatial_grid.init_state != SS_INITSTATE_DONE)
+		SSspatial_grid.remove_from_pre_init_queue(src, RECURSIVE_CONTENTS_AI_TARGETS)
+
+	for(var/atom/movable/location as anything in get_nested_locs(src) + src)
+		LAZYREMOVEASSOC(location.important_recursive_contents, RECURSIVE_CONTENTS_AI_TARGETS, src)
 
 /atom/movable/proc/do_simple_ranged_interaction(var/mob/user)
 	return FALSE
@@ -556,6 +600,9 @@
 	animate(src, alpha = old_alpha, pixel_x = old_x, pixel_y = old_y, transform = old_transform, time = 3, easing = CUBIC_EASING)
 
 /atom/movable/proc/get_floating_chat_x_offset()
+	return 0
+
+/atom/movable/proc/get_floating_chat_y_offset()
 	return 0
 
 /atom/movable/proc/can_attach_sticker(var/mob/user, var/obj/item/sticker/S)

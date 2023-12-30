@@ -1,11 +1,6 @@
-/var/datum/controller/subsystem/jobs/SSjobs
+#define Debug(text) if (GLOB.Debug2) {job_debug += text}
 
-#define BE_ASSISTANT 0
-#define RETURN_TO_LOBBY 1
-
-#define Debug(text) if (Debug2) {job_debug += text}
-
-/datum/controller/subsystem/jobs
+SUBSYSTEM_DEF(jobs)
 	// Subsystem stuff.
 	name = "Jobs"
 	flags = SS_NO_FIRE
@@ -25,9 +20,6 @@
 
 	var/safe_to_sanitize = FALSE
 	var/list/deferred_preference_sanitizations = list()
-
-/datum/controller/subsystem/jobs/New()
-	NEW_SS_GLOBAL(SSjobs)
 
 /datum/controller/subsystem/jobs/Initialize()
 	..()
@@ -65,7 +57,7 @@
 		if(!length(bitflag_to_job["[job.department_flag]"]))
 			bitflag_to_job["[job.department_flag]"] = list()
 		bitflag_to_job["[job.department_flag]"]["[job.flag]"] = job
-		if (config && config.use_age_restriction_for_jobs)
+		if (GLOB.config && GLOB.config.use_age_restriction_for_jobs)
 			job.fetch_age_restriction()
 
 	return TRUE
@@ -105,6 +97,8 @@
 			return FALSE
 		if(jobban_isbanned(player, rank))
 			return FALSE
+		if(!player.IsJobAvailable(rank))
+			return FALSE
 
 		if(!(player.client.prefs.GetPlayerAltTitle(job) in player.client.prefs.GetValidTitles(job)))
 			to_chat(player, "<span class='warning'>Your character is too young!</span>")
@@ -119,6 +113,7 @@
 			player.mind.role_alt_title = GetPlayerAltTitle(player, rank)
 			unassigned -= player
 			job.current_positions++
+			job.pre_spawn(player)
 			return TRUE
 	Debug("AR has failed, Player: [player], Rank: [rank]")
 	return FALSE
@@ -127,7 +122,6 @@
 	var/datum/job/job = GetJob(rank)
 	if(!istype(job))
 		return
-
 	job.current_positions--
 
 /datum/controller/subsystem/jobs/proc/FindOccupationCandidates(datum/job/job, level, flag)
@@ -145,7 +139,7 @@
 			. += player
 
 /datum/controller/subsystem/jobs/proc/ResetOccupations()
-	for(var/mob/abstract/new_player/player in player_list)
+	for(var/mob/abstract/new_player/player in GLOB.player_list)
 		if((player) && (player.mind))
 			player.mind.assigned_role = null
 			player.mind.special_role = null
@@ -176,20 +170,19 @@
 				var/min_job_age = job.get_minimum_character_age(V.get_species())
 				var/ideal_job_age = job.get_ideal_character_age(V.get_species())
 
-				switch(age)
-					if(min_job_age to (min_job_age+10))
-						weightedCandidates[V] = 3 // Still a bit young.
-					if((min_job_age+10) to (ideal_job_age-10))
-						weightedCandidates[V] = 6 // Better.
-					if((ideal_job_age-10) to (ideal_job_age+10))
-						weightedCandidates[V] = 10 // Great.
-					if((ideal_job_age+10) to (ideal_job_age+20))
-						weightedCandidates[V] = 6 // Still good.
-					if((ideal_job_age+20) to INFINITY)
-						weightedCandidates[V] = 3 // Geezer.
-					else
-						// If there's ABSOLUTELY NOBODY ELSE
-						if(candidates.len == 1) weightedCandidates[V] = 1
+				if(age > (ideal_job_age + 20)) // Elderly for the position
+					weightedCandidates[V] = 3
+				else if(age > (ideal_job_age + 10)) // Good, but on the elderly side
+					weightedCandidates[V] = 6
+				else if(age > (ideal_job_age - 10)) // Perfect
+					weightedCandidates[V] = 10
+				else if(age > (min_job_age + 10)) // Good, but on the young side
+					weightedCandidates[V] = 6
+				else if(age >= min_job_age) // Too young
+					weightedCandidates[V] = 3
+				else
+					if(candidates.len == 1) // There's only one option
+						weightedCandidates[V] = 1
 
 			var/mob/abstract/new_player/candidate = pickweight(weightedCandidates)
 			if(AssignRole(candidate, command_position))
@@ -225,7 +218,7 @@
 				break
 
 	//Get the players who are ready
-	for(var/mob/abstract/new_player/player in player_list)
+	for(var/mob/abstract/new_player/player in GLOB.player_list)
 		if(player.ready && player.mind && !player.mind.assigned_role)
 			unassigned += player
 
@@ -318,7 +311,7 @@
 		to_chat(H, SSatlas.current_sector.get_chat_description())
 
 	if("Arrivals Shuttle" in current_map.allowed_spawns && spawning_at == "Arrivals Shuttle")
-		H.centcomm_despawn_timer = addtimer(CALLBACK(H, /mob/living/.proc/centcomm_timeout), 10 MINUTES, TIMER_STOPPABLE)
+		H.centcomm_despawn_timer = addtimer(CALLBACK(H, TYPE_PROC_REF(/mob/living, centcomm_timeout)), 10 MINUTES, TIMER_STOPPABLE)
 		to_chat(H,SPAN_NOTICE("You have ten minutes to reach the station before you will be forced there."))
 
 	var/datum/job/job = GetJob(rank)
@@ -336,7 +329,7 @@
 		Debug("ER/([H]): Equipping custom loadout.")
 		job.pre_equip(H)
 		job.setup_account(H)
-
+		job.after_spawn(H)
 		EquipCustom(H, job, H.client.prefs, custom_equip_leftovers, spawn_in_storage, custom_equip_slots)
 
 		job.equip(H)
@@ -416,7 +409,11 @@
 	BITSET(H.hud_updateflag, IMPLOYAL_HUD)
 	BITSET(H.hud_updateflag, SPECIALROLE_HUD)
 
-	INVOKE_ASYNC(GLOBAL_PROC, .proc/show_location_blurb, H.client, 30)
+	var/obj/item/clothing/under/uniform = H.w_uniform
+	if(istype(uniform) && uniform.has_sensor)
+		uniform.sensor_mode = SUIT_SENSOR_MODES[H.client.prefs.sensor_setting]
+
+	INVOKE_ASYNC(GLOBAL_PROC, GLOBAL_PROC_REF(show_location_blurb), H.client, 10 SECONDS)
 
 	if(spawning_at == "Arrivals Shuttle")
 		to_chat(H, "<b>[current_map.command_spawn_message]</b>")
@@ -424,10 +421,10 @@
 	if(joined_late)
 		var/antag_count = 0
 		for(var/antag_type in SSticker.mode.antag_tags)
-			var/datum/antagonist/A = all_antag_types[antag_type]
+			var/datum/antagonist/A = GLOB.all_antag_types[antag_type]
 			antag_count += A.get_active_antag_count()
 		for(var/antag_type in SSticker.mode.antag_tags)
-			var/datum/antagonist/A = all_antag_types[antag_type]
+			var/datum/antagonist/A = GLOB.all_antag_types[antag_type]
 			A.update_current_antag_max()
 			if((A.role_type in H.client.prefs.be_special_role) && !(A.flags & ANTAG_OVERRIDE_JOB) && antag_count < A.cur_max)
 				A.add_antagonist(H.mind)
@@ -459,7 +456,7 @@
 	if(spawnpos && istype(spawnpos))
 		to_chat(src, "<span class='warning'>You come to the sudden realization that you never left the [current_map.station_name] at all! You were in cryo the whole time!</span>")
 		src.forceMove(pick(spawnpos.turfs))
-		global_announcer.autosay("[real_name], [mind.role_alt_title], [spawnpos.msg].", "Cryogenic Oversight")
+		GLOB.global_announcer.autosay("[real_name], [mind.role_alt_title], [spawnpos.msg].", "Cryogenic Oversight")
 		var/rank= src.mind.assigned_role
 		SSjobs.EquipRank(src, rank, 1)
 	else
@@ -477,7 +474,7 @@
 	if(spawnpos && istype(spawnpos))
 		to_chat(src, "<span class='warning'>You come to the sudden realization that you never left the [current_map.station_name] at all! You were in robotic storage the whole time!</span>")
 		src.forceMove(pick(spawnpos.turfs))
-		global_announcer.autosay("[real_name], [mind.role_alt_title], [spawnpos.msg].", "Robotic Oversight")
+		GLOB.global_announcer.autosay("[real_name], [mind.role_alt_title], [spawnpos.msg].", "Robotic Oversight")
 	else
 		SSjobs.centcomm_despawn_mob(src)
 
@@ -486,16 +483,17 @@
 // Convenience wrapper.
 /datum/controller/subsystem/jobs/proc/centcomm_despawn_mob(mob/living/H)
 	if(ishuman(H))
-		global_announcer.autosay("[H.real_name], [H.mind.role_alt_title], has entered long-term storage.", "[current_map.dock_name] Cryogenic Oversight")
+		GLOB.global_announcer.autosay("[H.real_name], [H.mind.role_alt_title], has entered long-term storage.", "[current_map.dock_name] Cryogenic Oversight")
 		H.visible_message("<span class='notice'>[H.name] makes their way to the [current_map.dock_short]'s cryostorage, and departs.</span>", "<span class='notice'>You make your way into [current_map.dock_short]'s cryostorage, and depart.</span>", range = 3)
 		DespawnMob(H)
 	else
-		global_announcer.autosay("[H.real_name], [H.mind.role_alt_title], has entered robotic storage.", "[current_map.dock_name] Robotic Oversight")
-		H.visible_message("<span class='notice'>[H.name] makes their way to the [current_map.dock_short]'s robotic storage, and departs.</span>", "<span class='notice'>You make your way into [current_map.dock_short]'s robotic storage, and depart.</span>", range = 3)
+		if(!isDrone(H))
+			GLOB.global_announcer.autosay("[H.real_name], [H.mind.role_alt_title], has entered robotic storage.", "[current_map.dock_name] Robotic Oversight")
+			H.visible_message("<span class='notice'>[H.name] makes their way to the [current_map.dock_short]'s robotic storage, and departs.</span>", "<span class='notice'>You make your way into [current_map.dock_short]'s robotic storage, and depart.</span>", range = 3)
 		DespawnMob(H)
 
 /datum/controller/subsystem/jobs/proc/LoadJobs(jobsfile)
-	if (!config.load_jobs_from_txt)
+	if (!GLOB.config.load_jobs_from_txt)
 		return FALSE
 
 	var/list/jobEntries = file2list(jobsfile)
@@ -557,7 +555,7 @@
 		var/level3 = 0 //low
 		var/level4 = 0 //never
 		var/level5 = 0 //banned
-		for(var/mob/abstract/new_player/player in player_list)
+		for(var/mob/abstract/new_player/player in GLOB.player_list)
 			if(!(player.ready && player.mind && !player.mind.assigned_role))
 				continue //This player is not ready
 			if(jobban_isbanned(player, job.title))
@@ -582,14 +580,14 @@
 
 	H.job = rank
 
-	if(current_map.force_spawnpoint && LAZYLEN(force_spawnpoints))
-		if(force_spawnpoints[rank])
-			H.forceMove(pick(force_spawnpoints[rank]))
+	if(current_map.force_spawnpoint && LAZYLEN(GLOB.force_spawnpoints))
+		if(GLOB.force_spawnpoints[rank])
+			H.forceMove(pick(GLOB.force_spawnpoints[rank]))
 		else
-			H.forceMove(pick(force_spawnpoints["Anyone"]))
+			H.forceMove(pick(GLOB.force_spawnpoints["Anyone"]))
 	else
 		if(job.latejoin_at_spawnpoints)
-			for (var/thing in landmarks_list)
+			for (var/thing in GLOB.landmarks_list)
 				var/obj/effect/landmark/L = thing
 				if(istype(L))
 					if(L.name == "LateJoin[rank]")
@@ -621,10 +619,10 @@
 				spawnpos.after_join(H)
 			else
 				to_chat(H, "Your chosen spawnpoint ([spawnpos.display_name]) is unavailable for your chosen job. Spawning you at the Arrivals shuttle instead.")
-				H.forceMove(pick(latejoin))
+				H.forceMove(pick(GLOB.latejoin))
 				. = "is inbound from the [current_map.dock_name]"
 		else
-			H.forceMove(pick(latejoin))
+			H.forceMove(pick(GLOB.latejoin))
 			. = "is inbound from the [current_map.dock_name]"
 
 	H.mind.selected_faction = SSjobs.GetFaction(H)
@@ -633,7 +631,7 @@
 
 /datum/controller/subsystem/jobs/proc/DespawnMob(mob/living/carbon/human/H)
 	//Update any existing objectives involving this mob.
-	for(var/datum/objective/O in all_objectives)
+	for(var/datum/objective/O in GLOB.all_objectives)
 		// We don't want revs to get objectives that aren't for heads of staff. Letting
 		// them win or lose based on cryo is silly so we remove the objective.
 		if(O.target == H.mind)
@@ -643,10 +641,10 @@
 
 	//Handle job slot/tater cleanup.
 	if (H.mind)
-		var/job = H.mind.assigned_role
-
-		FreeRole(job)
-
+		var/role = H.mind.assigned_role
+		var/datum/job/job = GetJob(H.mind.assigned_role)
+		job.on_despawn(H)
+		FreeRole(role)
 		if(H.mind.objectives.len)
 			qdel(H.mind.objectives)
 			H.mind.special_role = null
@@ -688,27 +686,21 @@
 			if(G.augment) //augments are handled somewhere else
 				continue
 
-			var/permitted = !G.allowed_roles || (job.title in G.allowed_roles)
-			permitted = permitted && G.check_species_whitelist(H)
-			permitted = permitted && (!G.faction || (G.faction == H.employer_faction || H.employer_faction == "Stellar Corporate Conglomerate"))
-			var/our_culture = text2path(prefs.culture)
-			permitted = permitted && (!G.culture_restriction || (our_culture in G.culture_restriction))
-			var/our_origin = text2path(prefs.origin)
-			permitted = permitted && (!G.origin_restriction || (our_origin in G.origin_restriction))
+			var/metadata
+			var/list/gear_test = prefs.gear[G.display_name]
+			if(gear_test?.len)
+				metadata = gear_test
+			else
+				metadata = list()
 
-			if(!permitted)
-				to_chat(H, "<span class='warning'>Your current job, culture, origin or whitelist status does not permit you to spawn with [thing]!</span>")
+			var/cant_spawn_reason = G.cant_spawn_item_reason(null, metadata, H, job, prefs)
+			if(cant_spawn_reason)
+				to_chat(H, SPAN_WARNING(cant_spawn_reason))
 				continue
 
 			if(G.slot && !(G.slot in custom_equip_slots))
 				// This is a miserable way to fix the loadout overwrite bug, but the alternative requires
 				// adding an arg to a bunch of different procs. Will look into it after this merge. ~ Z
-				var/metadata
-				var/list/gear_test = prefs.gear[G.display_name]
-				if(gear_test?.len)
-					metadata = gear_test
-				else
-					metadata = list()
 				var/obj/item/CI = G.spawn_item(null,metadata, H)
 				if (H.equip_to_slot_or_del(CI, G.slot))
 					to_chat(H, "<span class='notice'>Equipping you with [thing]!</span>")
@@ -784,7 +776,7 @@
 
 /datum/controller/subsystem/jobs/proc/get_roundstart_spawnpoint(var/rank)
 	var/list/loc_list = list()
-	for(var/obj/effect/landmark/start/sloc in landmarks_list)
+	for(var/obj/effect/landmark/start/sloc in GLOB.landmarks_list)
 		if(sloc.name != rank)	continue
 		if(locate(/mob/living) in sloc.loc)	continue
 		loc_list += sloc
@@ -829,27 +821,22 @@
 			if(!G.augment)
 				continue
 
-			var/permitted = !G.allowed_roles || (rank.title in G.allowed_roles)
-			permitted = permitted && G.check_species_whitelist(H)
-			permitted = permitted && (!G.faction || (G.faction == H.employer_faction || H.employer_faction == "Stellar Corporate Conglomerate"))
-			var/decl/origin_item/culture/our_culture = decls_repository.get_decl(text2path(prefs.culture))
-			permitted = permitted && (!G.culture_restriction || (our_culture in G.culture_restriction))
-			var/decl/origin_item/origin/our_origin = decls_repository.get_decl(text2path(prefs.origin))
-			permitted = permitted && (!G.origin_restriction || (our_origin in G.origin_restriction))
-
-			if(!permitted)
-				to_chat(H, SPAN_WARNING("Your current job, culture, origin or whitelist status does not permit you to spawn with [thing]!"))
-				continue
-
 			var/metadata
 			var/list/gear_test = prefs.gear[G.display_name]
 			if(gear_test?.len)
 				metadata = gear_test
 			else
 				metadata = list()
+
+			var/cant_spawn_reason = G.cant_spawn_item_reason(null, metadata, H, rank, prefs)
+			if(cant_spawn_reason)
+				to_chat(H, SPAN_WARNING(cant_spawn_reason))
+				continue
+
 			var/obj/item/organ/A = G.spawn_item(H, metadata, H)
-			var/obj/item/organ/external/affected = H.get_organ(A.parent_organ)
-			A.replaced(H, affected)
+			if(!istype(A, /obj/item/organ/external))
+				var/obj/item/organ/external/affected = H.get_organ(A.parent_organ)
+				A.replaced(H, affected)
 			H.update_body()
 
 	Debug("EA/([H]): Complete.")
@@ -863,6 +850,7 @@
 	text = uppertext(text)
 
 	var/obj/effect/overlay/T = new()
+	T.icon_state = "nothing"
 	T.maptext_height = 64
 	T.maptext_width = 512
 	T.layer = SCREEN_LAYER+1
@@ -875,12 +863,13 @@
 		T.maptext = "<span style=\"[style]\">[copytext(text,1,i)] </span>"
 		sleep(1)
 
-	addtimer(CALLBACK(GLOBAL_PROC, .proc/fade_location_blurb, C, T), duration)
+	addtimer(CALLBACK(GLOBAL_PROC, GLOBAL_PROC_REF(fade_location_blurb), C, T), duration)
 
 /proc/fade_location_blurb(client/C, obj/T)
 	animate(T, alpha = 0, time = 5)
 	sleep(5)
-	C.screen -= T
+	if(C)
+		C.screen -= T
 	qdel(T)
 
 /datum/controller/subsystem/jobs/proc/UniformReturn(mob/living/carbon/human/H, datum/preferences/prefs, datum/job/job)

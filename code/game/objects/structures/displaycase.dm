@@ -6,7 +6,7 @@
 	density = TRUE
 	anchored = TRUE
 	unacidable = TRUE
-	req_access = list(access_captain)
+	req_access = list(ACCESS_CAPTAIN)
 	var/health = 30
 	var/obj/held_obj
 	var/open = FALSE
@@ -50,7 +50,7 @@
 		density = FALSE
 		destroyed = TRUE
 		new /obj/item/material/shard(loc)
-		playsound(src, /decl/sound_category/glass_break_sound, 70, 1)
+		playsound(src, /singleton/sound_category/glass_break_sound, 70, 1)
 		update_icon()
 
 /obj/structure/displaycase/update_icon()
@@ -114,3 +114,9 @@
 
 /obj/structure/displaycase/captain_laser
 	spawn_contained_type = /obj/item/gun/energy/captain
+
+/obj/structure/displaycase/captain_revolver
+	spawn_contained_type = /obj/item/gun/projectile/revolver/mateba/captain
+
+/obj/structure/displaycase/adhomai_map
+	spawn_contained_type = /obj/item/toy/adhomian_map

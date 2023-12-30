@@ -87,7 +87,7 @@
 		var/obj/machinery/camera/C = target
 
 		if(prob(25))
-			C.emp_act(28)
+			C.emp_act(EMP_LIGHT)
 			selfmsg = "<span class='notice'>You hit the lens of \the [C] with \the [src], temporarily disabling the camera!</span>"
 
 			admin_attack_log(user, src,"hits the  camera with a laser pointer",  "EMPd a camera with a laser pointer")
@@ -99,7 +99,7 @@
 	if(iscarbon(target))
 		if(user.zone_sel.selecting == BP_EYES)
 			var/mob/living/carbon/C = target
-			if(C.eyecheck() <= 0 && prob(30))
+			if(prob(30) && C.flash_act())
 				selfmsg = "<span class='notice'>You blind \the [C] with \the [src].</span>"
 				othermsg = "<b>[user]</b> shines \the [src] at \the [C]'s eyes'."
 				C.eye_blind = 3

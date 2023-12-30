@@ -29,28 +29,39 @@ var/list/localhost_addresses = list(
 	if(!usr || usr != mob)	//stops us calling Topic for somebody else's client. Also helps prevent usr=null
 		return
 
+	// asset_cache
+	var/asset_cache_job
+	if(href_list["asset_cache_confirm_arrival"])
+		//to_chat(src, "ASSET JOB [href_list["asset_cache_confirm_arrival"]] ARRIVED.")
+		//because we skip the limiter, we have to make sure this is a valid arrival and not somebody tricking us
+		//	into letting append to a list without limit.
+		asset_cache_job = asset_cache_confirm_arrival(href_list["asset_cache_confirm_arrival"])
+		if(!asset_cache_job)
+			return
+
+	//byond bug ID:2256651
+	if (asset_cache_job && (asset_cache_job in completed_asset_jobs))
+		to_chat(src, SPAN_DANGER("An error has been detected in how your client is receiving resources. Attempting to correct.... (If you keep seeing these messages you might want to close byond and reconnect)"))
+		src << browse("...", "window=asset_cache_browser")
+		return
+
+	if (href_list["asset_cache_preload_data"])
+		asset_cache_preload_data(href_list["asset_cache_preload_data"])
+		return
+
 	if(!authed)
 		if(href_list["authaction"] in list("guest", "forums")) // Protection
 			..()
 		return
 
-	if(href_list["vueuiclose"])
-		var/datum/vueui/ui = locate(href_list["src"])
-		if(istype(ui))
-			ui.close()
-		else // UI is an orphan, close it directly.
-			src << browse(null, "window=vueui[href_list["src"]]")
+	// Tgui Topic middleware
+	if(tgui_Topic(href_list))
 		return
 
-	// asset_cache
-	if(href_list["asset_cache_confirm_arrival"])
-		//to_chat(src, "ASSET JOB [href_list["asset_cache_confirm_arrival"]] ARRIVED.")
-		var/job = text2num(href_list["asset_cache_confirm_arrival"])
-		//because we skip the limiter, we have to make sure this is a valid arrival and not somebody tricking us
-		//	into letting append to a list without limit.
-		if (job && job <= last_asset_job && !(job in completed_asset_jobs))
-			completed_asset_jobs += job
-			return
+	if(href_list["reload_tguipanel"])
+		nuke_chat()
+	if(href_list["reload_statbrowser"])
+		stat_panel.reinitialize()
 
 	if (href_list["EMERG"] && href_list["EMERG"] == "action")
 		if (!info_sent)
@@ -61,7 +72,7 @@ var/list/localhost_addresses = list(
 
 	//search the href for script injection
 	if( findtext(href,"<script",1,0) )
-		world.log <<  "Attempted use of scripts within a topic call, by [src]"
+		log_world("ERROR: Attempted use of scripts within a topic call, by [src]")
 		message_admins("Attempted use of scripts within a topic call, by [src]")
 		//del(usr)
 		return
@@ -100,15 +111,14 @@ var/list/localhost_addresses = list(
 		return
 
 	//Logs all hrefs
-	if(config && config.log_hrefs && href_logfile)
-		href_logfile << "<small>[time2text(world.timeofday,"hh:mm")] [src] (usr:[usr])</small> || [hsrc ? "[hsrc] " : ""][href]<br>"
+	if(GLOB.config && GLOB.config.logsettings["log_hrefs"] && GLOB.href_logfile)
+		WRITE_LOG(GLOB.config.logfiles["world_href_log"], "<small>[time2text(world.timeofday,"hh:mm")] [src] (usr:[usr])</small> || [hsrc ? "[hsrc] " : ""][href]<br>")
 
 	switch(href_list["_src_"])
 		if("holder")	hsrc = holder
 		if("usr")		hsrc = mob
 		if("prefs")		return prefs.process_link(usr,href_list)
 		if("vars")		return view_var_Topic(href,href_list,hsrc)
-		if("chat")		return chatOutput.Topic(href, href_list)
 
 	switch(href_list["action"])
 		if("openLink")
@@ -126,7 +136,7 @@ var/list/localhost_addresses = list(
 		warnings_check()
 
 	if(href_list["linkingrequest"])
-		if (!config.webint_url)
+		if (!GLOB.config.webint_url)
 			return
 
 		if (!href_list["linkingaction"])
@@ -134,12 +144,12 @@ var/list/localhost_addresses = list(
 
 		var/request_id = text2num(href_list["linkingrequest"])
 
-		if (!establish_db_connection(dbcon))
+		if (!establish_db_connection(GLOB.dbcon))
 			to_chat(src, "<span class='warning'>Action failed! Database link could not be established!</span>")
 			return
 
 
-		var/DBQuery/check_query = dbcon.NewQuery("SELECT player_ckey, status FROM ss13_player_linking WHERE id = :id:")
+		var/DBQuery/check_query = GLOB.dbcon.NewQuery("SELECT player_ckey, status FROM ss13_player_linking WHERE id = :id:")
 		check_query.Execute(list("id" = request_id))
 
 		if (!check_query.NextRow())
@@ -170,7 +180,7 @@ var/list/localhost_addresses = list(
 				to_chat(src, "<span class='warning'>Invalid command sent.</span>")
 				return
 
-		var/DBQuery/update_query = dbcon.NewQuery(query_contents)
+		var/DBQuery/update_query = GLOB.dbcon.NewQuery(query_contents)
 		update_query.Execute(query_details)
 
 		if (href_list["linkingaction"] == "accept" && alert("To complete the process, you have to visit the website. Do you want to do so now?",,"Yes","No") == "Yes")
@@ -205,14 +215,14 @@ var/list/localhost_addresses = list(
 
 			// Forum link from various panels.
 			if ("github")
-				if (!config.githuburl)
+				if (!GLOB.config.githuburl)
 					to_chat(src, "<span class='danger'>GitHub URL not set in the config. Unable to open the site.</span>")
 				else if (alert("This will open the GitHub page in your browser. Are you sure?",, "Yes", "No") == "Yes")
 					if (href_list["pr"])
-						var/pr_link = "[config.githuburl]pull/[href_list["pr"]]"
+						var/pr_link = "[GLOB.config.githuburl]pull/[href_list["pr"]]"
 						send_link(src, pr_link)
 					else
-						send_link(src, config.githuburl)
+						send_link(src, GLOB.config.githuburl)
 
 			// Forum link from various panels.
 			if ("forums")
@@ -255,23 +265,28 @@ var/list/localhost_addresses = list(
 		show_browser(src, data, "window=jobban_reason;size=400x300")
 		return
 
-	..()	//redirect to hsrc.()
+	if (hsrc)
+		var/datum/real_src = hsrc
+		if(QDELETED(real_src))
+			return
+
+	..()	//redirect to hsrc.Topic()
 
 /proc/client_by_ckey(ckey)
-	return directory[ckey]
+	return GLOB.directory[ckey]
 
 /client/proc/automute_by_time(mute_type)
 	if (!last_message_time)
 		return FALSE
 
-	if (config.macro_trigger && (REALTIMEOFDAY - last_message_time) < config.macro_trigger)
+	if (GLOB.config.macro_trigger && (REALTIMEOFDAY - last_message_time) < GLOB.config.macro_trigger)
 		spam_alert = min(spam_alert + 1, 4)
-		log_debug("SPAM_PROTECT: [src] tripped macro-trigger. Now at alert [spam_alert].")
+		LOG_DEBUG("SPAM_PROTECT: [src] tripped macro-trigger. Now at alert [spam_alert].")
 
 		if (spam_alert > 3 && !(prefs.muted & mute_type))
 			cmd_admin_mute(src.mob, mute_type, 1)
 			to_chat(src, "<span class='danger'>You have tripped the macro-trigger. An auto-mute was applied.</span>")
-			log_debug("SPAM_PROTECT: [src] tripped macro-trigger, now muted.")
+			LOG_DEBUG("SPAM_PROTECT: [src] tripped macro-trigger, now muted.")
 			return TRUE
 
 	else
@@ -285,17 +300,17 @@ var/list/localhost_addresses = list(
 
 	if (last_message == message)
 		last_message_count++
-		log_debug("SPAM_PROTECT: [src] tripped duplicate message filter. Last message count: [last_message_count]. Message: [message]")
+		LOG_DEBUG("SPAM_PROTECT: [src] tripped duplicate message filter. Last message count: [last_message_count]. Message: [message]")
 
 		if(last_message_count >= SPAM_TRIGGER_AUTOMUTE)
 			to_chat(src, "<span class='danger'>You have exceeded the spam filter limit for identical messages. An auto-mute was applied.</span>")
 			cmd_admin_mute(mob, mute_type, 1)
-			log_debug("SPAM_PROTECT: [src] tripped duplicate message filter, now muted.")
+			LOG_DEBUG("SPAM_PROTECT: [src] tripped duplicate message filter, now muted.")
 			last_message_count = 0
 			return TRUE
 		else if(last_message_count >= SPAM_TRIGGER_WARNING)
 			to_chat(src, "<span class='danger'>You are nearing the spam filter limit for identical messages.</span>")
-			log_debug("SPAM_PROTECT: [src] tripped duplicate message filter, now warned.")
+			LOG_DEBUG("SPAM_PROTECT: [src] tripped duplicate message filter, now warned.")
 			return FALSE
 	else
 		last_message_count = 0
@@ -308,7 +323,7 @@ var/list/localhost_addresses = list(
 	if (prefs.muted & mute_type)
 		to_chat(src, "<span class='warning'>You are muted and cannot send messages.</span>")
 		. = TRUE
-	else if (config.automute_on && !holder && length(message))
+	else if (GLOB.config.automute_on && !holder && length(message))
 		. = . || automute_by_time(mute_type)
 
 		. = . || automute_by_duplicate(message, mute_type)
@@ -342,28 +357,34 @@ var/list/localhost_addresses = list(
 	if(byond_version < MIN_CLIENT_VERSION)		//Out of date client.
 		return null
 
-	if(!(config.guests_allowed || config.external_auth) && IsGuestKey(key))
+	if(!(GLOB.config.guests_allowed || GLOB.config.external_auth) && IsGuestKey(key))
 		alert(src,"This server doesn't allow guest accounts to play. Please go to http://www.byond.com/ and register for a key.","Guest","OK")
 		del(src)
 		return
 
-	clients += src
-	directory[ckey] = src
+	GLOB.clients += src
+	GLOB.directory[ckey] = src
+	connection_time = world.time
+	connection_realtime = world.realtime
+	connection_timeofday = world.timeofday
 
-	if (LAZYLEN(config.client_blacklist_version))
+	if (LAZYLEN(GLOB.config.client_blacklist_version))
 		var/client_version = "[byond_version].[byond_build]"
-		if (client_version in config.client_blacklist_version)
+		if (client_version in GLOB.config.client_blacklist_version)
 			to_chat_immediate(src, "<span class='danger'><b>Your version of BYOND is explicitly blacklisted from joining this server!</b></span>")
 			to_chat_immediate(src, "Your current version: [client_version].")
 			to_chat_immediate(src, "Visit http://www.byond.com/download/ to download a different version. Try looking for a newer one, or go one lower.")
 			log_access("Failed Login: [key] [computer_id] [address] - Blacklisted BYOND version: [client_version].")
 			del(src)
 			return 0
+	// Instantiate stat panel
+	stat_panel = new(src, "statbrowser")
+	stat_panel.subscribe(src, PROC_REF(on_stat_panel_message))
+	// Instantiate tgui panel
+	tgui_panel = new(src, "browseroutput")
+	tgui_say = new(src, "tgui_say")
 
-	if(!chatOutput)
-		chatOutput = new(src)
-
-	if(IsGuestKey(key) && config.external_auth)
+	if(IsGuestKey(key) && GLOB.config.external_auth)
 		src.authed = FALSE
 		var/mob/abstract/unauthed/m = new()
 		m.client = src
@@ -376,6 +397,22 @@ var/list/localhost_addresses = list(
 		src.InitClient()
 		src.InitPrefs()
 		mob.LateLogin()
+
+	/// This spawn is the only thing keeping the stat panels and chat working. By removing this spawn, there will be black screens when loading the game.
+	/// It seems to be affected by the order of statpanel init: if it happens before send_resources(), then the statpanels won't load, but the game won't
+	/// blackscreen.
+	spawn(0)
+		// Initialize stat panel
+		stat_panel.initialize(
+			inline_html = file("html/statbrowser.html"),
+			inline_js = file("html/statbrowser.js"),
+			inline_css = file("html/statbrowser.css"),
+		)
+		addtimer(CALLBACK(src, PROC_REF(check_panel_loaded)), 30 SECONDS)
+
+	// Initialize tgui panel
+	tgui_panel.initialize()
+	tgui_say.initialize()
 
 /client/proc/InitPrefs()
 	//preferences datum - also holds some persistant data for the client (because we may as well keep these datums to a minimum)
@@ -397,7 +434,7 @@ var/list/localhost_addresses = list(
 /client/proc/InitClient()
 	to_chat(src, "<span class='alert'>If the title screen is black, resources are still downloading. Please be patient until the title screen appears.</span>")
 
-	var/local_connection = (config.auto_local_admin && !config.use_forumuser_api && (isnull(address) || localhost_addresses[address]))
+	var/local_connection = (GLOB.config.auto_local_admin && !GLOB.config.use_forumuser_api && (isnull(address) || localhost_addresses[address]))
 	// Automatic admin rights for people connecting locally.
 	// Concept stolen from /tg/ with deepest gratitude.
 	// And ported from Nebula with love.
@@ -407,16 +444,16 @@ var/list/localhost_addresses = list(
 	//Admin Authorisation
 	holder = admin_datums[ckey]
 	if(holder)
-		staff += src
+		GLOB.staff += src
 		holder.owner = src
 
 	log_client_to_db()
 
-	if (byond_version < config.client_error_version)
+	if (byond_version < GLOB.config.client_error_version)
 		to_chat(src, "<span class='danger'><b>Your version of BYOND is too old!</b></span>")
-		to_chat(src, config.client_error_message)
+		to_chat(src, GLOB.config.client_error_message)
 		to_chat(src, "Your version: [byond_version].")
-		to_chat(src, "Required version: [config.client_error_version] or later.")
+		to_chat(src, "Required version: [GLOB.config.client_error_version] or later.")
 		to_chat(src, "Visit http://www.byond.com/download/ to get the latest version of BYOND.")
 		if (holder)
 			to_chat(src, "Admins get a free pass. However, <b>please</b> update your BYOND as soon as possible. Certain things may cause crashes if you play with your present version.")
@@ -427,7 +464,7 @@ var/list/localhost_addresses = list(
 
 	// New player, and we don't want any.
 	if (!holder)
-		if (config.access_deny_new_players && player_age == -1)
+		if (GLOB.config.access_deny_new_players && player_age == -1)
 			log_access("Failed Login: [key] [computer_id] [address] - New player attempting connection during panic bunker.", ckey = ckey)
 			message_admins("Failed Login: [key] [computer_id] [address] - New player attempting connection during panic bunker.")
 			to_chat(src, "<span class='danger'>Apologies, but the server is currently not accepting connections from never before seen players.</span>")
@@ -435,7 +472,7 @@ var/list/localhost_addresses = list(
 			return 0
 
 		// Check if the account is too young.
-		if (config.access_deny_new_accounts != -1 && account_age != -1 && account_age <= config.access_deny_new_accounts)
+		if (GLOB.config.access_deny_new_accounts != -1 && account_age != -1 && account_age <= GLOB.config.access_deny_new_accounts)
 			log_access("Failed Login: [key] [computer_id] [address] - Account too young to play. [account_age] days.", ckey = ckey)
 			message_admins("Failed Login: [key] [computer_id] [address] - Account too young to play. [account_age] days.")
 			to_chat(src, "<span class='danger'>Apologies, but the server is currently not accepting connections from BYOND accounts this young.</span>")
@@ -449,12 +486,7 @@ var/list/localhost_addresses = list(
 		add_admin_verbs()
 
 	// Forcibly enable hardware-accelerated graphics, as we need them for the lighting overlays.
-	// (but turn them off first, since sometimes BYOND doesn't turn them on properly otherwise)
-	spawn(5) // And wait a half-second, since it sounds like you can do this too fast.
-		if(src)
-			winset(src, null, "command=\".configure graphics-hwmode off\"")
-			sleep(2) // wait a bit more, possibly fixes hardware mode not re-activating right
-			winset(src, null, "command=\".configure graphics-hwmode on\"")
+	winset(src, null, "command=\".configure graphics-hwmode on\"")
 
 	send_resources()
 
@@ -468,13 +500,12 @@ var/list/localhost_addresses = list(
 //DISCONNECT//
 //////////////
 /client/Del()
-	ticket_panels -= src
+	GLOB.ticket_panels -= src
 	if(holder)
 		holder.owner = null
-	staff -= src
-	directory -= ckey
-	clients -= src
-	SSassets.handle_disconnect(src)
+	GLOB.staff -= src
+	GLOB.directory -= ckey
+	GLOB.clients -= src
 	return ..()
 
 
@@ -483,10 +514,10 @@ var/list/localhost_addresses = list(
 // Returns null if no DB connection can be established, or -1 if the requested key was not found in the database
 
 /proc/get_player_age(key)
-	if(!establish_db_connection(dbcon))
+	if(!establish_db_connection(GLOB.dbcon))
 		return null
 
-	var/DBQuery/query = dbcon.NewQuery("SELECT datediff(Now(),firstseen) as age FROM ss13_player WHERE ckey = :ckey:")
+	var/DBQuery/query = GLOB.dbcon.NewQuery("SELECT datediff(Now(),firstseen) as age FROM ss13_player WHERE ckey = :ckey:")
 	query.Execute(list("ckey"=ckey(key)))
 
 	if(query.NextRow())
@@ -498,10 +529,10 @@ var/list/localhost_addresses = list(
 	if (IsGuestKey(src.key))
 		return
 
-	if(!establish_db_connection(dbcon))
+	if(!establish_db_connection(GLOB.dbcon))
 		return
 
-	var/DBQuery/query = dbcon.NewQuery("SELECT datediff(Now(),firstseen) as age, whitelist_status, account_join_date, DATEDIFF(NOW(), account_join_date) FROM ss13_player WHERE ckey = :ckey:")
+	var/DBQuery/query = GLOB.dbcon.NewQuery("SELECT datediff(Now(),firstseen) as age, whitelist_status, account_join_date, DATEDIFF(NOW(), account_join_date) FROM ss13_player WHERE ckey = :ckey:")
 
 	if(!query.Execute(list("ckey"=ckey(key))))
 		return
@@ -520,20 +551,20 @@ var/list/localhost_addresses = list(
 			if (!account_join_date)
 				account_age = -1
 			else
-				var/DBQuery/query_datediff = dbcon.NewQuery("SELECT DATEDIFF(NOW(), [account_join_date])")
+				var/DBQuery/query_datediff = GLOB.dbcon.NewQuery("SELECT DATEDIFF(NOW(), [account_join_date])")
 				if (!query_datediff.Execute())
 					return
 				if (query_datediff.NextRow())
 					account_age = text2num(query_datediff.item[1])
 
-	var/DBQuery/query_ip = dbcon.NewQuery("SELECT ckey FROM ss13_player WHERE ip = '[address]'")
+	var/DBQuery/query_ip = GLOB.dbcon.NewQuery("SELECT ckey FROM ss13_player WHERE ip = '[address]'")
 	query_ip.Execute()
 	related_accounts_ip = ""
 	while(query_ip.NextRow())
 		related_accounts_ip += "[query_ip.item[1]], "
 		break
 
-	var/DBQuery/query_cid = dbcon.NewQuery("SELECT ckey FROM ss13_player WHERE computerid = '[computer_id]'")
+	var/DBQuery/query_cid = GLOB.dbcon.NewQuery("SELECT ckey FROM ss13_player WHERE computerid = '[computer_id]'")
 	query_cid.Execute()
 	related_accounts_cid = ""
 	while(query_cid.NextRow())
@@ -546,11 +577,11 @@ var/list/localhost_addresses = list(
 
 	if(found)
 		//Player already identified previously, we need to just update the 'lastseen', 'ip', 'computer_id', 'byond_version' and 'byond_build' variables
-		var/DBQuery/query_update = dbcon.NewQuery("UPDATE ss13_player SET lastseen = Now(), ip = :ip:, computerid = :computerid:, lastadminrank = :lastadminrank:, account_join_date = :account_join_date:, byond_version = :byond_version:, byond_build = :byond_build: WHERE ckey = :ckey:")
+		var/DBQuery/query_update = GLOB.dbcon.NewQuery("UPDATE ss13_player SET lastseen = Now(), ip = :ip:, computerid = :computerid:, lastadminrank = :lastadminrank:, account_join_date = :account_join_date:, byond_version = :byond_version:, byond_build = :byond_build: WHERE ckey = :ckey:")
 		query_update.Execute(list("ckey"=ckey(key),"ip"=src.address,"computerid"=src.computer_id,"lastadminrank"=admin_rank,"account_join_date"=account_join_date,"byond_version"=byond_version,"byond_build"=byond_build))
-	else if (!config.access_deny_new_players)
+	else if (!GLOB.config.access_deny_new_players)
 		//New player!! Need to insert all the stuff
-		var/DBQuery/query_insert = dbcon.NewQuery("INSERT INTO ss13_player (ckey, firstseen, lastseen, ip, computerid, lastadminrank, account_join_date, byond_version, byond_build) VALUES (:ckey:, Now(), Now(), :ip:, :computerid:, :lastadminrank:, :account_join_date:, :byond_version:, :byond_build:)")
+		var/DBQuery/query_insert = GLOB.dbcon.NewQuery("INSERT INTO ss13_player (ckey, firstseen, lastseen, ip, computerid, lastadminrank, account_join_date, byond_version, byond_build) VALUES (:ckey:, Now(), Now(), :ip:, :computerid:, :lastadminrank:, :account_join_date:, :byond_version:, :byond_build:)")
 		query_insert.Execute(list("ckey"=ckey(key),"ip"=src.address,"computerid"=src.computer_id,"lastadminrank"=admin_rank,"account_join_date"=account_join_date,"byond_version"=byond_version,"byond_build"=byond_build))
 	else
 		// Flag as -1 to know we have to kiiick them.
@@ -560,7 +591,7 @@ var/list/localhost_addresses = list(
 		account_join_date = "Error"
 
 	//Logging player access
-	var/DBQuery/query_accesslog = dbcon.NewQuery("INSERT INTO `ss13_connection_log`(`datetime`,`serverip`,`ckey`,`ip`,`computerid`,`byond_version`,`byond_build`,`game_id`) VALUES(Now(), :serverip:, :ckey:, :ip:, :computerid:, :byond_version:, :byond_build:, :game_id:);")
+	var/DBQuery/query_accesslog = GLOB.dbcon.NewQuery("INSERT INTO `ss13_connection_log`(`datetime`,`serverip`,`ckey`,`ip`,`computerid`,`byond_version`,`byond_build`,`game_id`) VALUES(Now(), :serverip:, :ckey:, :ip:, :computerid:, :byond_version:, :byond_build:, :game_id:);")
 	query_accesslog.Execute(list("serverip"="[world.internet_address]:[world.port]","ckey"=ckey(key),"ip"=src.address,"computerid"=src.computer_id,"byond_version"=byond_version,"byond_build"=byond_build,"game_id"=game_id))
 
 
@@ -573,17 +604,25 @@ var/list/localhost_addresses = list(
 	if(inactivity > duration)	return inactivity
 	return 0
 
-//send resources to the client. It's here in its own proc so we can move it around easiliy if need be
+/// Send resources to the client.
+/// Sends both game resources and browser assets.
 /client/proc/send_resources()
 #if (PRELOAD_RSC == 0)
 	var/static/next_external_rsc = 0
-	var/list/external_rsc_urls = config.external_rsc_urls
+	var/list/external_rsc_urls = GLOB.config.external_rsc_urls
 	if(length(external_rsc_urls))
 		next_external_rsc = Wrap(next_external_rsc+1, 1, external_rsc_urls.len+1)
 		preload_rsc = external_rsc_urls[next_external_rsc]
 #endif
 
-	SSassets.handle_connect(src)
+	spawn (10) //removing this spawn causes all clients to not get verbs. (this can't be addtimer because these assets may be needed before the mc inits)
+		//load info on what assets the client has
+		src << browse('code/modules/asset_cache/validate_assets.html', "window=asset_cache_browser")
+
+		//Precache the client with all other assets slowly, so as to not block other browse() calls
+		if (GLOB.config.asset_simple_preload)
+			addtimer(CALLBACK(SSassets.transport, TYPE_PROC_REF(/datum/asset_transport, send_assets_slow), src, SSassets.transport.preload), 5 SECONDS)
+
 
 /mob/proc/MayRespawn()
 	return 0
@@ -640,16 +679,16 @@ var/list/localhost_addresses = list(
 	check_linking_requests()
 
 /client/proc/check_linking_requests()
-	if (!config.webint_url || !config.sql_enabled)
+	if (!GLOB.config.webint_url || !GLOB.config.sql_enabled)
 		return
 
-	if (!establish_db_connection(dbcon))
+	if (!establish_db_connection(GLOB.dbcon))
 		return
 
 	var/list/requests = list()
 	var/list/query_details = list("ckey" = ckey)
 
-	var/DBQuery/select_query = dbcon.NewQuery("SELECT id, forum_id, forum_username, datediff(Now(), created_at) as request_age FROM ss13_player_linking WHERE status = 'new' AND player_ckey = :ckey: AND deleted_at IS NULL")
+	var/DBQuery/select_query = GLOB.dbcon.NewQuery("SELECT id, forum_id, forum_username, datediff(Now(), created_at) as request_age FROM ss13_player_linking WHERE status = 'new' AND player_ckey = :ckey: AND deleted_at IS NULL")
 	select_query.Execute(query_details)
 
 	while (select_query.NextRow())
@@ -664,7 +703,7 @@ var/list/localhost_addresses = list(
 		i++
 
 		var/linked_forum_name = null
-		if (config.forumurl)
+		if (GLOB.config.forumurl)
 			var/route_attributes = list2params(list("mode" = "viewprofile", "u" = request["forum_id"]))
 			linked_forum_name = "<a href='byond://?src=\ref[src];routeWebInt=forums/members;routeAttributes=[route_attributes]'>[request["forum_username"]]</a>"
 
@@ -677,13 +716,13 @@ var/list/localhost_addresses = list(
 	return
 
 /client/proc/gather_linking_requests()
-	if (!config.webint_url || !config.sql_enabled)
+	if (!GLOB.config.webint_url || !GLOB.config.sql_enabled)
 		return
 
-	if (!establish_db_connection(dbcon))
+	if (!establish_db_connection(GLOB.dbcon))
 		return
 
-	var/DBQuery/select_query = dbcon.NewQuery("SELECT COUNT(*) AS request_count FROM ss13_player_linking WHERE status = 'new' AND player_ckey = :ckey: AND deleted_at IS NULL")
+	var/DBQuery/select_query = GLOB.dbcon.NewQuery("SELECT COUNT(*) AS request_count FROM ss13_player_linking WHERE status = 'new' AND player_ckey = :ckey: AND deleted_at IS NULL")
 	select_query.Execute(list("ckey" = ckey))
 
 	if (select_query.NextRow())
@@ -703,18 +742,18 @@ var/list/localhost_addresses = list(
 			if (!webint_validate_attributes(list("mode", "u"), attributes_text = attributes))
 				return
 
-			if (!config.forumurl)
+			if (!GLOB.config.forumurl)
 				return
 
-			linkURL = "[config.forumurl]memberlist.php?"
+			linkURL = "[GLOB.config.forumurl]memberlist.php?"
 
 			linkURL += attributes
 
 		if ("interface/user/link")
-			if (!config.webint_url)
+			if (!GLOB.config.webint_url)
 				return
 
-			linkURL = "[config.webint_url]user/link"
+			linkURL = "[GLOB.config.webint_url]user/link"
 
 		if ("interface/login/sso_server")
 			//This also validates the attributes as it runs
@@ -722,14 +761,14 @@ var/list/localhost_addresses = list(
 			if (!new_attributes)
 				return
 
-			if (!config.webint_url)
+			if (!GLOB.config.webint_url)
 				return
 
-			linkURL = "[config.webint_url]login/sso_server?"
+			linkURL = "[GLOB.config.webint_url]login/sso_server?"
 			linkURL += new_attributes
 
 		else
-			log_debug("Unrecognized process_webint_link() call used. Route sent: '[route]'.")
+			LOG_DEBUG("Unrecognized process_webint_link() call used. Route sent: '[route]'.")
 			return
 
 	send_link(src, linkURL)
@@ -737,9 +776,9 @@ var/list/localhost_addresses = list(
 
 /client/proc/check_ip_intel()
 	set waitfor = 0 //we sleep when getting the intel, no need to hold up the client connection while we sleep
-	if (config.ipintel_email)
+	if (GLOB.config.ipintel_email)
 		var/datum/ipintel/res = get_ip_intel(address)
-		if (config.ipintel_rating_kick && res.intel >= config.ipintel_rating_kick)
+		if (GLOB.config.ipintel_rating_kick && res.intel >= GLOB.config.ipintel_rating_kick)
 			if (!holder)
 				message_admins("Proxy Detection: [key_name_admin(src)] IP intel rated [res.intel*100]% likely to be a proxy/VPN. They are being kicked because of this.")
 				log_admin("Proxy Detection: [key_name_admin(src)] IP intel rated [res.intel*100]% likely to be a proxy/VPN. They are being kicked because of this.")
@@ -747,14 +786,14 @@ var/list/localhost_addresses = list(
 				del(src)
 			else
 				message_admins("Proxy Detection: [key_name_admin(src)] IP intel rated [res.intel*100]% likely to be a Proxy/VPN.")
-		else if (res.intel >= config.ipintel_rating_bad)
+		else if (res.intel >= GLOB.config.ipintel_rating_bad)
 			message_admins("Proxy Detection: [key_name_admin(src)] IP intel rated [res.intel*100]% likely to be a Proxy/VPN.")
 		ip_intel = res.intel
 
 /client/proc/findJoinDate()
 	var/list/http = world.Export("http://byond.com/members/[ckey]?format=text")
 	if(!http)
-		log_debug("ACCESS CONTROL: Failed to connect to byond age check for [ckey]")
+		LOG_DEBUG("ACCESS CONTROL: Failed to connect to byond age check for [ckey]")
 		return
 	var/F = file2text(http["CONTENT"])
 	if(F)
@@ -763,17 +802,6 @@ var/list/localhost_addresses = list(
 			. = R.group[1]
 		else
 			CRASH("Age check regex failed for [src.ckey]")
-
-// Byond seemingly calls stat, each tick.
-// Calling things each tick can get expensive real quick.
-// So we slow this down a little.
-// See: http://www.byond.com/docs/ref/info.html#/client/proc/Stat
-/client/Stat()
-	. = ..()
-	if (holder)
-		sleep(1)
-	else
-		stoplag(5)
 
 /client/MouseDrag(src_object, over_object, src_location, over_location, src_control, over_control, params)
 	. = ..()
@@ -825,3 +853,45 @@ var/list/localhost_addresses = list(
 
 /obj/screen/click_catcher/is_auto_clickable()
 	return TRUE
+
+/**
+ * Handles incoming messages from the stat-panel TGUI.
+ */
+/client/proc/on_stat_panel_message(type, payload)
+	switch(type)
+		if("Update-Verbs")
+			init_verbs()
+		if("Remove-Tabs")
+			panel_tabs -= payload["tab"]
+		if("Send-Tabs")
+			panel_tabs |= payload["tab"]
+		if("Reset-Tabs")
+			panel_tabs = list()
+		if("Set-Tab")
+			stat_tab = payload["tab"]
+			SSstatpanels.immediate_send_stat_data(src)
+
+/// compiles a full list of verbs and sends it to the browser
+/client/proc/init_verbs()
+	var/list/verblist = list()
+	var/list/verbstoprocess = verbs.Copy()
+	if(mob)
+		verbstoprocess += mob.verbs
+		for(var/atom/movable/thing as anything in mob.contents)
+			verbstoprocess += thing.verbs
+	panel_tabs.Cut() // panel_tabs get reset in init_verbs on JS side anyway
+	for(var/procpath/verb_to_init as anything in verbstoprocess)
+		if(!verb_to_init)
+			continue
+		if(verb_to_init.hidden)
+			continue
+		if(!istext(verb_to_init.category))
+			continue
+		panel_tabs |= verb_to_init.category
+		verblist[++verblist.len] = list(verb_to_init.category, verb_to_init.name)
+	src.stat_panel.send_message("init_verbs", list(panel_tabs = panel_tabs, verblist = verblist))
+
+/client/proc/check_panel_loaded()
+	if(stat_panel.is_ready())
+		return
+	to_chat(src, SPAN_DANGER("Statpanel failed to load, click <a href='?src=[ref(src)];reload_statbrowser=1'>here</a> to reload the panel "))

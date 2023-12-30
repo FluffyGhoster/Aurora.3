@@ -128,7 +128,7 @@
 
 
 	flick("migniter-spark", src)
-	spark(src, 2, alldirs)
+	spark(src, 2, GLOB.alldirs)
 	src.last_spark = world.time
 	use_power_oneoff(1000)
 	var/turf/location = src.loc
@@ -137,11 +137,12 @@
 	return 1
 
 /obj/machinery/sparker/emp_act(severity)
+	. = ..()
+
 	if(stat & (BROKEN|NOPOWER))
-		..(severity)
 		return
+
 	ignite()
-	..(severity)
 
 /obj/machinery/button/ignition
 	name = "ignition switch"
@@ -159,7 +160,7 @@
 
 	for(var/obj/machinery/sparker/M in SSmachinery.machinery)
 		if (M.id == id)
-			INVOKE_ASYNC(M, /obj/machinery/sparker/proc/ignite)
+			INVOKE_ASYNC(M, TYPE_PROC_REF(/obj/machinery/sparker, ignite))
 
 	for(var/obj/machinery/igniter/M in SSmachinery.machinery)
 		if(M.id == id)

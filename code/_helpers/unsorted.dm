@@ -54,6 +54,51 @@
 	else if(dx < 0)
 		. += 360
 
+/**
+ * Gets all turfs inside a cone, return a `/list` of `/turf` that are inside the cone
+ *
+ * * source - The source from which to calculate the cone from, an `/atom`
+ * * middle_angle - The angle that is considered the middle, if not specific (eg. from a click), you can use `dir2angle(dir)` to convert the direction of the atom to an angle
+ * * distance - How far to take turfs from
+ * * angle_spread - How much degrees does the cone spread, from the `middle_angle`
+ *
+ */
+/proc/get_turfs_in_cone(atom/source, middle_angle, distance, angle_spread)
+	SHOULD_NOT_SLEEP(TRUE)
+	SHOULD_BE_PURE(TRUE)
+
+	if(!source)
+		crash_with("Source not specified")
+
+	if(isnull(middle_angle) || middle_angle < 0)
+		crash_with("middle_angle not specified, or invalid")
+
+	if(isnull(distance))
+		crash_with("Distance not specified")
+
+	if(angle_spread < 0)
+		crash_with("angle_spread cannot be negative")
+
+	var/list/turf/turfs_in_cone = list()
+	RETURN_TYPE(turfs_in_cone)
+
+	var/angle_left = (middle_angle - angle_spread + 360) % 360
+	var/angle_right = (middle_angle + angle_spread) % 360
+
+	for(var/turf/turf in range(distance, source))
+		var/angle_between_source_and_target = Get_Angle(source, turf)
+
+		// Ensure correct handling of angles spanning the 0-degree mark
+		if(angle_left <= angle_right)
+			if((angle_between_source_and_target >= angle_left) && (angle_between_source_and_target <= angle_right))
+				turfs_in_cone += turf
+		else
+			if((angle_between_source_and_target >= angle_left) || (angle_between_source_and_target <= angle_right))
+				turfs_in_cone += turf
+
+	return turfs_in_cone
+
+
 /proc/get_projectile_angle(atom/source, atom/target)
 	var/sx = source.x * world.icon_size
 	var/sy = source.y * world.icon_size
@@ -263,7 +308,7 @@ Turf and target are seperate in case you want to teleport some distance from a t
 
 #undef LOCATE_COORDS
 
-//Returns whether or not a player is a guest using their ckey as an input
+///Returns whether or not a player is a guest using their ckey as an input
 /proc/IsGuestKey(key)
 	if (findtext(key, "Guest-", 1, 7) != 1) //was findtextEx
 		return 0
@@ -279,7 +324,7 @@ Turf and target are seperate in case you want to teleport some distance from a t
 			return 0
 	return 1
 
-//Ensure the frequency is within bounds of what it should be sending/recieving at
+///Ensure the frequency is within bounds of what it should be sending/recieving at
 /proc/sanitize_frequency(var/f, var/low = PUBLIC_LOW_FREQ, var/high = PUBLIC_HIGH_FREQ)
 	f = round(f)
 	f = max(low, f)
@@ -288,19 +333,19 @@ Turf and target are seperate in case you want to teleport some distance from a t
 		f += 1
 	return f
 
-//Turns 1479 into 147.9
+///Turns 1479 into 147.9
 /proc/format_frequency(var/f)
 	return "[round(f / 10)].[f % 10]"
 
-//Picks a string of symbols to display as the law number for hacked or ion laws
+///Picks a string of symbols to display as the law number for hacked or ion laws
 /proc/ionnum()
 	return "[pick("1","2","3","4","5","6","7","8","9","0")][pick("!","@","#","$","%","^","&","*")][pick("!","@","#","$","%","^","&","*")][pick("!","@","#","$","%","^","&","*")]"
 
-//When an AI is activated, it can choose from a list of non-slaved borgs to have as a slave.
+///When an AI is activated, it can choose from a list of non-slaved borgs to have as a slave.
 /proc/freeborg()
 	var/select = null
 	var/list/borgs = list()
-	for (var/mob/living/silicon/robot/A in player_list)
+	for (var/mob/living/silicon/robot/A in GLOB.player_list)
 		if (A.stat == 2 || A.connected_ai || A.scrambled_codes || istype(A,/mob/living/silicon/robot/drone))
 			continue
 		var/name = "[A.real_name] ([A.mod_type] [A.braintype])"
@@ -310,10 +355,10 @@ Turf and target are seperate in case you want to teleport some distance from a t
 		select = input("Unshackled borg signals detected:", "Borg selection", null, null) as null|anything in borgs
 		return borgs[select]
 
-//When a borg is activated, it can choose which AI it wants to be slaved to
+///When a borg is activated, it can choose which AI it wants to be slaved to
 /proc/active_ais()
 	. = list()
-	for(var/mob/living/silicon/ai/A in living_mob_list)
+	for(var/mob/living/silicon/ai/A in GLOB.living_mob_list)
 		if(A.stat == DEAD)
 			continue
 		if(A.control_disabled == 1)
@@ -321,7 +366,7 @@ Turf and target are seperate in case you want to teleport some distance from a t
 		. += A
 	return .
 
-//Find an active ai with the least borgs. VERBOSE PROCNAME HUH!
+///Find an active ai with the least borgs. VERBOSE PROCNAME HUH!
 /proc/select_active_ai_with_fewest_borgs()
 	var/mob/living/silicon/ai/selected
 	var/list/active = active_ais()
@@ -366,7 +411,7 @@ Turf and target are seperate in case you want to teleport some distance from a t
 	new_list += Dead_list
 	return new_list
 
-//Returns a list of all mobs with their name
+///Returns a list of all mobs with their name
 /proc/getmobs()
 
 	var/list/mobs = sortmobs()
@@ -392,10 +437,10 @@ Turf and target are seperate in case you want to teleport some distance from a t
 
 	return creatures
 
-//Orders mobs by type then by name
+///Orders mobs by type then by name
 /proc/sortmobs()
 	var/list/moblist = list()
-	var/list/sortmob = sortAtom(mob_list)
+	var/list/sortmob = sortAtom(GLOB.mob_list)
 	for(var/mob/abstract/eye/M in sortmob)
 		moblist.Add(M)
 	for(var/mob/living/silicon/ai/M in sortmob)
@@ -424,15 +469,17 @@ Turf and target are seperate in case you want to teleport some distance from a t
 //		mob_list.Add(M)
 	return moblist
 
-//Forces a variable to be posative
+///Forces a variable to be posative
 /proc/modulus(var/M)
 	if(M >= 0)
 		return M
 	if(M < 0)
 		return -M
 
-// returns the turf located at the map edge in the specified direction relative to A
-// used for mass driver
+/**
+ * Returns the turf located at the map edge in the specified direction relative to A
+ * used for mass driver
+ */
 /proc/get_edge_target_turf(var/atom/A, var/direction)
 
 	var/turf/target = locate(A.x, A.y, A.z)
@@ -453,10 +500,12 @@ Turf and target are seperate in case you want to teleport some distance from a t
 
 	return target
 
-// returns turf relative to A in given direction at set range
-// result is bounded to map size
-// note range is non-pythagorean
-// used for disposal system
+/**
+ * returns turf relative to A in given direction at set range
+ * result is bounded to map size
+ * note range is non-pythagorean
+ * used for disposal system
+ */
 /proc/get_ranged_target_turf(var/atom/A, var/direction, var/range)
 
 	var/x = A.x
@@ -480,25 +529,25 @@ Turf and target are seperate in case you want to teleport some distance from a t
 	var/y = min(world.maxy, max(1, A.y + dy))
 	return locate(x,y,A.z)
 
-//Makes sure MIDDLE is between LOW and HIGH. If not, it adjusts it. Returns the adjusted value.
+///Makes sure MIDDLE is between LOW and HIGH. If not, it adjusts it. Returns the adjusted value.
 /proc/between(var/low, var/middle, var/high)
 	return max(min(middle, high), low)
 
-//returns random gauss number
+///Returns random gauss number
 /proc/GaussRand(var/sigma)
-  var/x,y,rsq
-  do
-    x=2*rand()-1
-    y=2*rand()-1
-    rsq=x*x+y*y
-  while(rsq>1 || !rsq)
-  return sigma*y*sqrt(-2*log(rsq)/rsq)
+	var/x,y,rsq
+	do
+		x=2*rand()-1
+		y=2*rand()-1
+		rsq=x*x+y*y
+	while(rsq>1 || !rsq)
+	return sigma*y*sqrt(-2*log(rsq)/rsq)
 
-//returns random gauss number, rounded to 'roundto'
+///Returns random gauss number, rounded to 'roundto'
 /proc/GaussRandRound(var/sigma,var/roundto)
 	return round(GaussRand(sigma),roundto)
 
-//Step-towards method of determining whether one atom can see another. Similar to viewers()
+///Step-towards method of determining whether one atom can see another. Similar to viewers()
 /proc/can_see(var/atom/source, var/atom/target, var/length=5) // I couldn't be arsed to do actual raycasting :I This is horribly inaccurate.
 	var/turf/current = get_turf(source)
 	var/turf/target_turf = get_turf(target)
@@ -553,9 +602,21 @@ Turf and target are seperate in case you want to teleport some distance from a t
 
 	else return get_step(ref, base_dir)
 
+/**
+ * Makes a mob perform an action to another mob, showing a progress bar and over a given time
+ *
+ * * user - The `/mob` that performs the action
+ * * target - The `/mob` that the action is being performed to
+ * * delay - The time it takes for the action to be performed
+ * * needhand - Boolean, if a free hand is needed for the action to be successful
+ * * display_progress - Boolean, if the progress bar is shown
+ * * extra_checks - A `/datum/callback` that is invoked to perform extra checks and validate that the action can continue to be performed,
+ * if it returns `FALSE` or an algebraic equivalent the action is aborted
+ */
 /proc/do_mob(mob/user, mob/target, delay = 30, needhand = TRUE, display_progress = TRUE, datum/callback/extra_checks) //This is quite an ugly solution but i refuse to use the old request system.
 	if(!user || !target)
-		return 0
+		stack_trace("do_mob called without either an user or a target!")
+		return FALSE
 
 	var/user_loc = user.loc
 	var/target_loc = target.loc
@@ -571,7 +632,7 @@ Turf and target are seperate in case you want to teleport some distance from a t
 	var/endtime = world.time + delay
 	var/starttime = world.time
 
-	. = 1
+	. = TRUE
 
 	while (world.time < endtime)
 		stoplag(1)
@@ -579,72 +640,159 @@ Turf and target are seperate in case you want to teleport some distance from a t
 			progbar.update(world.time - starttime)
 
 		if(QDELETED(user) || QDELETED(target))
-			. = 0
+			. = FALSE
 			break
 
 		if (user.loc != user_loc || target.loc != target_loc || (needhand && user.get_active_hand() != holding) || user.stat || user.weakened || user.stunned || (extra_checks && !extra_checks.Invoke()))
-			. = 0
+			. = FALSE
 			break
 
 	if (progbar)
 		qdel(progbar)
 
-/proc/do_after(mob/user as mob, delay as num, needhand = TRUE, atom/movable/act_target = null, use_user_turf = FALSE, display_progress = TRUE, datum/callback/extra_checks)
-	if(!user || isnull(user))
-		return 0
+/// Integer. Unique sequential ID from the `do_after` proc used to validate `DO_USER_UNIQUE_ACT` flag checks.
+/mob/var/do_unique_user_handle = 0
+/// The mob currently interacting with the atom during a `do_after` timer. Used to validate `DO_TARGET_UNIQUE_ACT` flag checks.
+/atom/var/mob/do_unique_target_user
 
-	var/Location
-	var/act_location
-	if(use_user_turf)	//When this is true, do_after() will check whether the user's turf has changed, rather than the user's loc.
-		Location = get_turf(user)
-	else
-		Location = user.loc
+/**
+ * Timed actions involving one mob user and (optionally) one target.
+ *
+ * Returns TRUE on success or FALSE on failure
+ *
+ * Arguments:
+ * * user: The user to check for.
+ * * delay: The delay in ticks to wait before returning TRUE.
+ * * target: The target to check for. Optional.
+ * * do_flags: Flags that determine what the user and target can and cannot do, defined in [mobs.dm]. Defaults to DO_DEFAULT.
+ * * incapacitation_flags: Incapacitation flags that determines if the user can be incapacitated. Defaults to INCAPACITATION_DEFAULT.
+ * * extra_checks: Optional extra checks, that uses a callback. See [datum/callback].
+ *
+ */
+/proc/do_after(mob/user, delay, atom/target, do_flags = DO_DEFAULT, incapacitation_flags = INCAPACITATION_DEFAULT, datum/callback/extra_checks)
+	return !do_after_detailed(user, delay, target, do_flags, incapacitation_flags)
 
-	if (!act_target)
-		act_target = user
-	else
-		act_location = get_turf(act_target)
+/**
+ * See [/proc/do_after]
+ * Returns the exact error, defined in [mobs.dm] for custom error messages.
+ * Overlaps with do_flags, with some extra error messages available.
+ */
+/proc/do_after_detailed(mob/user, delay, atom/target, do_flags = DO_DEFAULT, incapacitation_flags = INCAPACITATION_DEFAULT, datum/callback/extra_checks)
+	if(!delay)
+		return FALSE
 
-	var/holding = user.get_active_hand()
+	if(!user)
+		return DO_MISSING_USER
+
+	var/initial_handle
+	if (HAS_FLAG(do_flags, DO_USER_UNIQUE_ACT))
+		initial_handle = sequential_id("/proc/do_after")
+		user.do_unique_user_handle = initial_handle
+
+	var/do_feedback = HAS_FLAG(do_flags, DO_FAIL_FEEDBACK)
+
+	if(target?.do_unique_target_user)
+		if (do_feedback)
+			USE_FEEDBACK_FAILURE("\The [target.do_unique_target_user] is already interacting with \the [target]!")
+		return DO_TARGET_UNIQUE_ACT
+
+	if (HAS_FLAG(do_flags, DO_TARGET_UNIQUE_ACT) && target)
+		target.do_unique_target_user = user
+
+	var/atom/user_loc = HAS_FLAG(do_flags, DO_USER_CAN_MOVE) ? null : user.loc
+	var/user_dir = HAS_FLAG(do_flags, DO_USER_CAN_TURN) ? null : user.dir
+	var/user_hand = HAS_FLAG(do_flags, DO_USER_SAME_HAND) ? user.hand : null
+
+	var/atom/target_loc = HAS_FLAG(do_flags, DO_TARGET_CAN_MOVE) ? null : target?.loc
+	var/target_dir = HAS_FLAG(do_flags, DO_TARGET_CAN_TURN) ? null : target?.dir
+	var/target_type = target?.type
+
+	var/target_zone = HAS_FLAG(do_flags, DO_USER_SAME_ZONE) ? user.zone_sel.selecting : null
+
+	if (HAS_FLAG(do_flags, DO_MOVE_CHECKS_TURFS))
+		if (user_loc)
+			user_loc = get_turf(user)
+		if (target_loc)
+			target_loc = get_turf(target)
 
 	var/datum/progressbar/progbar
-	if (display_progress && user.client && (user.client.prefs.toggles_secondary & PROGRESS_BARS))
-		progbar = new(user, delay, act_target)
+	if (HAS_FLAG(do_flags, DO_SHOW_PROGRESS) && user.client && (user.client.prefs.toggles_secondary & PROGRESS_BARS))
+		progbar = new(user, delay, target || user)
 
-	var/endtime = world.time + delay
-	var/starttime = world.time
+	SEND_SIGNAL(user, COMSIG_DO_AFTER_BEGAN)
 
-	. = 1
+	var/start_time = world.time
+	var/end_time = start_time + delay
 
-	while (world.time < endtime)
+	. = FALSE
+
+	while(world.time < end_time)
 		stoplag(1)
-		if (progbar)
-			progbar.update(world.time - starttime)
-
-		var/user_loc_to_check
-		if(use_user_turf)
-			user_loc_to_check = get_turf(user)
-		else
-			user_loc_to_check = user.loc
-
-		if (!user || user.stat || user.weakened || user.stunned)
-			. = 0
+		if (!QDELETED(progbar))
+			progbar.update(world.time - start_time)
+		if (QDELETED(user))
+			. = DO_MISSING_USER
 			break
-
-		if ((use_user_turf >= 0 && user_loc_to_check != Location) || (act_location && (get_turf(act_target) != act_location)))
-			. = 0
+		if (target_type && (QDELETED(target) || target_type != target.type))
+			. = DO_MISSING_TARGET
 			break
-
-		if(needhand && !(user.get_active_hand() == holding))	//Sometimes you don't want the user to have to keep their active hand
-			. = 0
+		if (user.incapacitated(incapacitation_flags))
+			. = DO_INCAPACITATED
 			break
-
+		if (user_loc && user_loc != (HAS_FLAG(do_flags, DO_MOVE_CHECKS_TURFS) ? get_turf(user) : user.loc))
+			. = DO_USER_CAN_MOVE
+			break
+		if (target_loc && target_loc != (HAS_FLAG(do_flags, DO_MOVE_CHECKS_TURFS) ? get_turf(target) : target.loc))
+			. = DO_TARGET_CAN_MOVE
+			break
+		if (user_dir && user_dir != user.dir)
+			. = DO_USER_CAN_TURN
+			break
+		if (target_dir && target_dir != target.dir)
+			. = DO_TARGET_CAN_TURN
+			break
+		if (HAS_FLAG(do_flags, DO_USER_SAME_HAND) && user_hand != user.hand)
+			. = DO_USER_SAME_HAND
+			break
+		if (initial_handle && initial_handle != user.do_unique_user_handle)
+			. = DO_USER_UNIQUE_ACT
+			break
+		if (target_zone && user.zone_sel.selecting != target_zone)
+			. = DO_USER_SAME_ZONE
+			break
 		if (extra_checks && !extra_checks.Invoke())
-			. = 0
+			. = DO_EXTRA_CHECKS
 			break
 
-	if (progbar)
-		qdel(progbar)
+	if (. && do_feedback)
+		switch (.)
+			if (DO_MISSING_TARGET)
+				USE_FEEDBACK_FAILURE("\The [target] no longer exists!")
+			if (DO_INCAPACITATED)
+				USE_FEEDBACK_FAILURE("You're no longer able to act!")
+			if (DO_USER_CAN_MOVE)
+				USE_FEEDBACK_FAILURE("You must remain still to perform that action!")
+			if (DO_TARGET_CAN_MOVE)
+				USE_FEEDBACK_FAILURE("\The [target] must remain still to perform that action!")
+			if (DO_USER_CAN_TURN)
+				USE_FEEDBACK_FAILURE("You must face the same direction to perform that action!")
+			if (DO_TARGET_CAN_TURN)
+				USE_FEEDBACK_FAILURE("\The [target] must face the same direction to perform that action!")
+			if (DO_USER_SAME_HAND)
+				USE_FEEDBACK_FAILURE("You must remain on the same active hand to perform that action!")
+			if (DO_USER_UNIQUE_ACT)
+				USE_FEEDBACK_FAILURE("You stop what you're doing with \the [target].")
+			if (DO_USER_SAME_ZONE)
+				USE_FEEDBACK_FAILURE("You must remain targeting the same zone to perform that action!")
+
+	if(!QDELETED(progbar))
+		progbar.endProgress()
+	if (HAS_FLAG(do_flags, DO_USER_UNIQUE_ACT) && user.do_unique_user_handle == initial_handle)
+		user.do_unique_user_handle = 0
+	if (HAS_FLAG(do_flags, DO_TARGET_UNIQUE_ACT) && target)
+		target.do_unique_target_user = null
+
+	SEND_SIGNAL(user, COMSIG_DO_AFTER_ENDED)
 
 /proc/atom_maintain_position(var/atom/A, var/atom/location)
 	if(QDELETED(A) || QDELETED(location))
@@ -682,6 +830,43 @@ Turf and target are seperate in case you want to teleport some distance from a t
 	var/dy = abs(B.y - A.y)
 	return get_dir(A, B) & (rand() * (dx+dy) < dy ? 3 : 12)
 
+/proc/get_compass_dir(atom/start, atom/end) //get_dir() only considers an object to be north/south/east/west if there is zero deviation. This uses rounding instead. // Ported from CM-SS13
+	if(!start || !end)
+		return 0
+	if(!start.z || !end.z)
+		return 0 //Atoms are not on turfs.
+
+	var/dy= end.y - start.y
+	var/dx= end.x - start.x
+	if(!dy)
+		return (dx >= 0) ? 4 : 8
+
+	var/angle = arctan(dx / dy)
+	if(dy < 0)
+		angle += 180
+	else if(dx < 0)
+		angle += 360
+
+	switch(angle) //diagonal directions get priority over straight directions in edge cases
+		if (22.5 to 67.5)
+			return NORTHEAST
+		if (112.5 to 157.5)
+			return SOUTHEAST
+		if (202.5 to 247.5)
+			return SOUTHWEST
+		if (292.5 to 337.5)
+			return NORTHWEST
+		if (0 to 22.5)
+			return NORTH
+		if (67.5 to 112.5)
+			return EAST
+		if (157.5 to 202.5)
+			return SOUTH
+		if (247.5 to 292.5)
+			return WEST
+		else
+			return NORTH
+
 //chances are 1:value. anyprob(1) will always return true
 /proc/anyprob(value)
 	return (rand(1,value)==value)
@@ -704,7 +889,7 @@ Turf and target are seperate in case you want to teleport some distance from a t
 
 /proc/get_mob_with_client_list()
 	var/list/mobs = list()
-	for(var/mob/M in mob_list)
+	for(var/mob/M in GLOB.mob_list)
 		if (M.client)
 			mobs += M
 	return mobs
@@ -889,7 +1074,6 @@ var/list/wall_items = typecacheof(list(
 	/obj/structure/mirror,
 	/obj/structure/fireaxecabinet,
 	/obj/machinery/computer/security/telescreen/entertainment,
-	/obj/machinery/station_map,
 	/obj/structure/sign
 ))
 
@@ -924,7 +1108,7 @@ var/list/wall_items = typecacheof(list(
 // Returns a variable type as string, optionally with some details:
 // Objects (datums) get their type, paths get the type name, scalars show length (text) and value (numbers), lists show length.
 // Also attempts some detection of otherwise undetectable types using ref IDs
-var/global/known_proc = new /proc/get_type_ref_bytes
+var/global/known_proc = /proc/get_type_ref_bytes
 /proc/get_debug_type(var/V, var/details = TRUE, var/print_numbers = TRUE, var/path_names = TRUE, var/text_lengths = TRUE, var/list_lengths = TRUE, var/show_useless_subtypes = TRUE)
 	// scalars / basic types
 	if(isnull(V))
@@ -983,8 +1167,8 @@ var/global/known_proc = new /proc/get_type_ref_bytes
 		return details && show_useless_subtypes ? "regex([D.type])" : "regex"
 	if(istype(D, /sound))
 		return details ? "sound([D.type])" : "sound"
-	if(istype(D, /decl))
-		return details ? "decl([D.type])" : "decl"
+	if(istype(D, /singleton))
+		return details ? "singleton([D.type])" : "singleton"
 	if(isdatum(D))
 		return details ? "datum([D.type])" : "datum"
 	if(istype(D)) // let's future proof ourselves
@@ -1094,7 +1278,7 @@ var/global/known_proc = new /proc/get_type_ref_bytes
 /proc/stoplag(initial_delay)
 	// If we're initializing, our tick limit might be over 100 (testing config), but stoplag() penalizes procs that go over.
 	// 	Unfortunately, this penalty slows down init a *lot*. So, we disable it during boot and lobby, when relatively few things should be calling this.
-	if (!Master || Master.initializing || !Master.round_started)
+	if (!Master || GAME_STATE < RUNLEVEL_SETUP)
 		sleep(world.tick_lag)
 		return 1
 

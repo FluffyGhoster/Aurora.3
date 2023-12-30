@@ -32,7 +32,6 @@
 	set_listening(TRUE)
 	recalculateChannels(TRUE)
 	possibly_deactivate_in_loc()
-	moved_event.register(src, src, /obj/item/device/radio/headset/proc/possibly_deactivate_in_loc)
 
 /obj/item/device/radio/headset/proc/possibly_deactivate_in_loc()
 	if(ismob(loc))
@@ -45,6 +44,10 @@
 	QDEL_NULL(keyslot2)
 	return ..()
 
+/obj/item/device/radio/headset/Moved(atom/old_loc, forced)
+	. = ..()
+	possibly_deactivate_in_loc()
+
 /obj/item/device/radio/headset/set_listening(new_listening, actual_setting = TRUE)
 	. = ..()
 	if(listening && on)
@@ -53,8 +56,10 @@
 /obj/item/device/radio/headset/list_channels(var/mob/user)
 	return list_secure_channels()
 
-/obj/item/device/radio/headset/examine(mob/user)
-	if(!(..(user, 1) && radio_desc))
+/obj/item/device/radio/headset/examine(mob/user, distance, is_adjacent)
+	. = ..()
+
+	if(!(is_adjacent && radio_desc))
 		return
 
 	to_chat(user, "The following channels are available:")
@@ -69,10 +74,10 @@
 /obj/item/device/radio/headset/handle_message_mode(mob/living/M, message, channel)
 	if(channel == "special")
 		if(translate_binary)
-			var/datum/language/binary = all_languages[LANGUAGE_ROBOT]
+			var/datum/language/binary = GLOB.all_languages[LANGUAGE_ROBOT]
 			binary.broadcast(M, message)
 		if(translate_hivenet)
-			var/datum/language/bug = all_languages[LANGUAGE_VAURCA]
+			var/datum/language/bug = GLOB.all_languages[LANGUAGE_VAURCA]
 			bug.broadcast(M, message)
 		return null
 
@@ -141,6 +146,7 @@
 
 
 /obj/item/device/radio/headset/proc/recalculateChannels(var/setDescription = FALSE)
+	var/list/old_channel_settings = channels.Copy()
 	channels = list()
 	translate_binary = FALSE
 	translate_hivenet = FALSE
@@ -176,6 +182,8 @@
 			independent = TRUE
 
 	for (var/ch_name in channels)
+		if(ch_name in old_channel_settings)
+			channels[ch_name] = old_channel_settings[ch_name]
 		secure_radio_connections[ch_name] = SSradio.add_object(src, radiochannels[ch_name], RADIO_CHAT)
 
 	if(setDescription)
@@ -194,7 +202,7 @@
 	desc_info = "This radio doubles as a pair of earmuffs by providing sound protection."
 	icon_state = "earset"
 	item_state = "earset"
-	item_flags = SOUNDPROTECTION
+	item_flags = ITEM_FLAG_SOUND_PROTECTION
 	slot_flags = SLOT_EARS | SLOT_TWOEARS
 
 /obj/item/device/radio/headset/wrist
@@ -641,10 +649,10 @@
 	name = "earmuffs"
 	desc = "Protects your hearing from loud noises, and quiet ones as well."
 	desc_antag = "This set of earmuffs has a secret compartment housing radio gear, allowing it to function as a standard headset."
-	icon = 'icons/obj/clothing/ears.dmi'
+	icon = 'icons/obj/clothing/ears/earmuffs.dmi'
 	icon_state = "earmuffs"
 	item_state = "earmuffs"
-	item_flags = SOUNDPROTECTION
+	item_flags = ITEM_FLAG_SOUND_PROTECTION
 	slot_flags = SLOT_EARS | SLOT_TWOEARS
 
 /obj/item/device/radio/headset/syndicate
@@ -670,6 +678,12 @@
 	origin_tech = list(TECH_ILLEGAL = 2)
 	syndie = TRUE
 	ks1type = /obj/item/device/encryptionkey/burglar
+
+/obj/item/device/radio/headset/jockey
+	icon_state = "syn_headset"
+	origin_tech = list(TECH_ILLEGAL = 2)
+	syndie = TRUE
+	ks1type = /obj/item/device/encryptionkey/jockey
 
 /obj/item/device/radio/headset/ninja
 	icon_state = "syn_headset"
@@ -698,7 +712,7 @@
 		return ..()
 
 	var/turf/T = get_turf(src)
-	var/obj/effect/overmap/visitable/V = map_sectors["[T.z]"]
+	var/obj/effect/overmap/visitable/V = GLOB.map_sectors["[T.z]"]
 	if(istype(V) && V.comms_support)
 		default_frequency = assign_away_freq(V.name)
 		if(V.comms_name)
@@ -708,6 +722,10 @@
 
 	if (use_common)
 		set_frequency(PUB_FREQ)
+
+/obj/item/device/radio/headset/ship/coalition_navy
+	icon_state = "coal_headset"
+	ks1type = /obj/item/device/encryptionkey/ship/coal_navy
 
 /obj/item/device/radio/headset/ship/common
 	use_common = TRUE
@@ -722,6 +740,11 @@
 	desc = "The headset of the boss's boss."
 	icon_state = "com_headset"
 	ks2type = /obj/item/device/encryptionkey/ert
+
+/obj/item/device/radio/headset/ert/alt
+	name = "emergency response team bowman headset"
+	icon_state = "com_headset_alt"
+	item_state = "headset_alt"
 
 /obj/item/device/radio/headset/legion
 	name = "Tau Ceti Foreign Legion radio headset"

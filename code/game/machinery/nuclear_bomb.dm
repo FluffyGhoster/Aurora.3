@@ -149,7 +149,7 @@ var/bomb_set
 /obj/machinery/nuclearbomb/attack_hand(mob/user as mob)
 	if (extended)
 		if (panel_open)
-			wires.Interact(user)
+			wires.interact(user)
 		else
 			ui_interact(user)
 	else if (deployable)
@@ -273,7 +273,7 @@ var/bomb_set
 					to_chat(usr, "<span class='warning'>The safety is still on.</span>")
 					SSnanoui.update_uis(src)
 					return
-				if (wires.IsIndexCut(NUCLEARBOMB_WIRE_TIMING))
+				if (wires.is_cut(WIRE_TIMING))
 					to_chat(usr, "<span class='warning'>Nothing happens, something might be wrong with the wiring.</span>")
 					SSnanoui.update_uis(src)
 					return
@@ -290,7 +290,7 @@ var/bomb_set
 					set_security_level(SEC_LEVEL_DELTA)
 					alerted = 1
 			if (href_list["safety"])
-				if (wires.IsIndexCut(NUCLEARBOMB_WIRE_SAFETY))
+				if (wires.is_cut(WIRE_SAFETY))
 					to_chat(usr, "<span class='warning'>Nothing happens, something might be wrong with the wiring.</span>")
 					SSnanoui.update_uis(src)
 					return
@@ -430,7 +430,7 @@ var/bomb_set
 
 /obj/machinery/nuclearbomb/station/LateInitialize()
 	for(var/turf/simulated/floor/T in RANGE_TURFS(1, src))
-		T.set_flooring(decls_repository.get_decl(/decl/flooring/reinforced/circuit/red))
+		T.set_flooring(GET_SINGLETON(/singleton/flooring/reinforced/circuit/red))
 		flash_tiles += T
 	update_icon()
 
@@ -459,7 +459,7 @@ var/bomb_set
 	if(!last_turf_state || target_icon_state != last_turf_state)
 		for(var/thing in flash_tiles)
 			var/turf/simulated/floor/T = thing
-			if(!istype(T.flooring, /decl/flooring/reinforced/circuit/red))
+			if(!istype(T.flooring, /singleton/flooring/reinforced/circuit/red))
 				flash_tiles -= T
 				continue
 			T.icon_state = target_icon_state

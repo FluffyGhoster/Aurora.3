@@ -2,7 +2,7 @@
 	name = "protolathe"
 	desc = "An upgraded variant of a common Autolathe, this can only be operated via a nearby RnD console, but can manufacture cutting edge technology, provided it has the design and the correct materials."
 	icon_state = "protolathe"
-	flags = OPENCONTAINER
+	atom_flags = ATOM_FLAG_OPEN_CONTAINER
 
 	idle_power_usage = 30
 	active_power_usage = 5000
@@ -182,7 +182,7 @@
 			ret += "[D.materials[M] - materials[M]] [M]"
 	for(var/C in D.chemicals)
 		if(!reagents.has_reagent(C, D.chemicals[C]))
-			var/decl/reagent/R = decls_repository.get_decl(C)
+			var/singleton/reagent/R = GET_SINGLETON(C)
 			if(ret != "")
 				ret += ", "
 			ret += "[R.name]"

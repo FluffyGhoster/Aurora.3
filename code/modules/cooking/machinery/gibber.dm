@@ -2,11 +2,12 @@
 /obj/machinery/gibber
 	name = "gibber"
 	desc = "The name isn't descriptive enough?"
-	icon = 'icons/obj/kitchen.dmi'
+	desc_extended = "WARNING : Insurance no longer covers entertaining intrusive thoughts. Keep your limbs to yourself."
+	icon = 'icons/obj/machinery/cooking_machines.dmi'
 	icon_state = "grinder"
 	density = 1
 	anchored = TRUE
-	req_access = list(access_kitchen,access_morgue)
+	req_access = list(ACCESS_KITCHEN,ACCESS_MORGUE)
 
 	var/operating = 0 //Is it on?
 	var/dirty = 0 // Does it need cleaning?
@@ -16,14 +17,14 @@
 
 	idle_power_usage = 2
 	active_power_usage = 500
-	
+
 //auto-gibs anything that bumps into it
 /obj/machinery/gibber/autogibber
 	var/turf/input_plate
 
 /obj/machinery/gibber/autogibber/Initialize()
 	. = ..()
-	for(var/i in cardinal)
+	for(var/i in GLOB.cardinal)
 		var/obj/machinery/mineral/input/input_obj = locate( /obj/machinery/mineral/input, get_step(loc, i) )
 		if(input_obj)
 			if(isturf(input_obj.loc))
@@ -77,7 +78,7 @@
 	startgibbing(user)
 
 /obj/machinery/gibber/examine()
-	..()
+	. = ..()
 	to_chat(usr, "The safety guard is [emagged ? SPAN_DANGER("disabled") : "enabled"].")
 
 /obj/machinery/gibber/emag_act(var/remaining_charges, var/mob/user)
@@ -202,7 +203,7 @@
 	for(var/i=1 to slab_count)
 		var/obj/item/reagent_containers/food/snacks/meat/new_meat = new slab_type(src, rand(3,8))
 		if(istype(new_meat))
-			new_meat.reagents.add_reagent(/decl/reagent/nutriment,slab_nutrition)
+			new_meat.reagents.add_reagent(/singleton/reagent/nutriment,slab_nutrition)
 			if(occupant.reagents)
 				occupant.reagents.trans_to_obj(new_meat, round(occupant.reagents.total_volume/slab_count,1))
 

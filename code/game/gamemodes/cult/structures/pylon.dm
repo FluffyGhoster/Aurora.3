@@ -63,7 +63,7 @@
 	update_icon()
 
 /obj/structure/cult/pylon/examine(var/mob/user)
-	..()
+	. = ..()
 	if(damagetaken)
 		switch(damagetaken)
 			if(1 to 8)
@@ -88,12 +88,12 @@
 //If the pylon goes a long time without shooting anything, it will consider slowing down processing
 /obj/structure/cult/pylon/proc/reconsider_interval()
 	var/mindist = INFINITY
-	for(var/mob/living/L in player_list)
+	for(var/mob/living/L in GLOB.player_list)
 		if(L.z != z)
 			continue
 		if(L.stat == DEAD)
 			continue
-		if(iscult(L))
+		if(iscultist(L))
 			continue
 		if(L == sacrificer)
 			continue
@@ -151,7 +151,7 @@
 //If user is a cultist, speaks message to them with a prefix
 //If user is not cultist, then speaks cult-y gibberish
 /obj/structure/cult/pylon/proc/speak_to(var/mob/user, var/message)
-	if(iscult(user) || (all_languages[LANGUAGE_CULT] in user.languages))
+	if(iscultist(user) || (GLOB.all_languages[LANGUAGE_CULT] in user.languages))
 		to_chat(user, "A voice speaks into your mind, <span class='cult'><i>[message]</i></span>")
 	else
 		to_chat(user, "A voice speaks into your mind, <span class='cult'><i>[lang.scramble(message)]</i></span>")
@@ -284,7 +284,7 @@
 			continue		 //This is mainly for xenoarch antags
 		if(L.stat == DEAD)  //No point shooting at corpses
 			continue
-		if(iscult(L))		 //Pylon wont shoot at cultists or constructs
+		if(iscultist(L))		 //Pylon wont shoot at cultists or constructs
 			continue
 		if(!isInSight(src, L))
 			continue
@@ -293,7 +293,7 @@
 			if(!LAZYLEN(mech.pilots))
 				continue
 			for(var/mob/M in mech.pilots)
-				if(M == sacrificer || iscult(M))
+				if(M == sacrificer || iscultist(M))
 					continue
 		target = L
 		break
@@ -327,7 +327,7 @@
 	A.launch_projectile(target)
 	next_shot = world.time + shot_delay
 	A = null //So projectiles can GC
-	addtimer(CALLBACK(src, .proc/handle_firing), shot_delay + 1)
+	addtimer(CALLBACK(src, PROC_REF(handle_firing)), shot_delay + 1)
 
 /obj/structure/cult/pylon/attack_hand(mob/M)
 	if (M.a_intent == "help")
@@ -380,7 +380,7 @@
 		if(istype(I, /obj/item/nullrod))
 			shatter()
 			return
-		if(I.damtype != BRUTE)
+		if(I.damtype != DAMAGE_BRUTE)
 			to_chat(user, SPAN_WARNING("You swing at the pylon to no effect."))
 			return
 
@@ -388,7 +388,7 @@
 		if(istype(source, /obj/item/projectile/beam/cult))
 			return //No feedback loops
 		var/obj/item/projectile/proj = source
-		if(proj.damage_type == BURN)
+		if(proj.damage_type == DAMAGE_BURN)
 			if(empowered <= 0)
 				visible_message(SPAN_CULT("The beam refracts inside the pylon, splitting into an indistinct violet glow. The crystal takes on a new, more ominous aura!"))
 			empowered += damage * 0.2
@@ -398,7 +398,7 @@
 			start_process()
 			update_icon()
 			return
-		else if(proj.damage_type != BRUTE)
+		else if(proj.damage_type != DAMAGE_BRUTE)
 			return
 		ranged = TRUE
 
@@ -429,7 +429,7 @@
 
 /obj/structure/cult/pylon/proc/shatter()
 	visible_message(SPAN_DANGER("The pylon shatters into shards of crystal!"), SPAN_WARNING("You hear a tinkle of crystal shards."))
-	playsound(get_turf(src), /decl/sound_category/glass_break_sound, 75, 1)
+	playsound(get_turf(src), /singleton/sound_category/glass_break_sound, 75, 1)
 	isbroken = TRUE
 	if(pylonmode == PYLON_TURRET)
 		//If the pylon had a soul in it then it plays a creepy evil sound as the soul is released

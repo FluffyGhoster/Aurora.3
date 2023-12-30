@@ -9,9 +9,8 @@
 #define  ARMOR_BALLISTIC_PISTOL		30
 #define  ARMOR_BALLISTIC_MEDIUM		40
 #define  ARMOR_BALLISTIC_CARBINE    45 //Reduces polymer round damage to 15.3.
-#define  ARMOR_BALLISTIC_REVOLVER   50 //Reduces 357 round damage to 14.
-#define  ARMOR_BALLISTIC_RIFLE		55 //Used by security ballistic armour. Drops 762 down to 18.5 damage.
-#define  ARMOR_BALLISTIC_MAJOR		60
+#define  ARMOR_BALLISTIC_MAJOR      55 //Reduces 762 round damage to 18.
+#define  ARMOR_BALLISTIC_RIFLE		60 //Used by security ballistic armour. Drops 762 down to 11.2 damage.
 #define  ARMOR_BALLISTIC_AP			75
 #define  ARMOR_BALLISTIC_HEAVY		100
 
@@ -19,15 +18,16 @@
 #define  ARMOR_LASER_SMALL			25
 #define  ARMOR_LASER_KEVLAR			30
 #define  ARMOR_LASER_PISTOL			35
-#define  ARMOR_LASER_MEDIUM			40
-#define  ARMOR_LASER_RIFLE			45 //Used by security ablatives. Drops midlasers down to 13.5 damage.
-#define  ARMOR_LASER_MAJOR			55
+#define  ARMOR_LASER_MEDIUM			40 // Drops midlasers down to 22.5 damage.
+#define  ARMOR_LASER_RIFLE			45 // Drops midlasers down to 18 damage.
+#define  ARMOR_LASER_MAJOR			55 // Drops midlasers down to 9 damage.
 #define  ARMOR_LASER_AP				70
 #define  ARMOR_LASER_HEAVY			100
 
 #define  ARMOR_MELEE_MINOR			5
 #define  ARMOR_MELEE_SMALL			10
 #define  ARMOR_MELEE_KNIVES			15
+#define	 ARMOR_MELEE_MEDIUM			20
 #define  ARMOR_MELEE_KEVLAR			25
 #define  ARMOR_MELEE_RESISTANT		30
 #define  ARMOR_MELEE_MAJOR			50

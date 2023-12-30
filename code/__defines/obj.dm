@@ -1,7 +1,3 @@
-#define OBJ_FLAG_ROTATABLE          (1<<1) //Can this object be rotated?
-#define OBJ_FLAG_ROTATABLE_ANCHORED (1<<2) // This object can be rotated even while anchored
-#define OBJ_FLAG_SIGNALER           (1<<3) // Can this take a signaler? only in use for machinery
-
 /obj/proc/issurgerycompatible() // set to false for things that are too unwieldy for surgery
 	return TRUE
 
@@ -81,3 +77,5 @@
 			if(tool.iswirecutter() && (!requires_surgery_compatibility || tool.issurgerycompatible()))
 				return return_value
 	return null
+
+#define HELMET_GARB_PASS_ICON "pass_icon"

@@ -7,7 +7,8 @@
 		return
 
 	if(SSticker.mode && SSticker.mode.check_antagonists_topic(href, href_list))
-		check_antagonists()
+		var/static/datum/tgui_module/moderator/shared/check_antagonists/global_check_antags = new()
+		global_check_antags.ui_interact(usr)
 		return
 
 	else if(href_list["stickyban"])
@@ -73,7 +74,7 @@
 
 		var/mob/playermob
 
-		for(var/mob/M in player_list)
+		for(var/mob/M in GLOB.player_list)
 			if(M.ckey == banckey)
 				playermob = M
 				break
@@ -89,7 +90,7 @@
 		else
 			message_admins("Ban process: A mob matching [playermob.ckey] was found at location [playermob.x], [playermob.y], [playermob.z]. Custom ip and computer id fields replaced with the ip and computer id from the located mob")
 
-		if (config.ban_legacy_system)
+		if (GLOB.config.ban_legacy_system)
 			notes_add(banckey,banreason,usr)
 		else
 			notes_add_sql(banckey, banreason, usr, banip, bancid)
@@ -155,7 +156,6 @@
 
 		switch(href_list["simplemake"])
 			if("observer")			M.change_mob_type( /mob/abstract/observer , null, null, delmob )
-			if("larva")				M.change_mob_type( /mob/living/carbon/alien/larva , null, null, delmob )
 			if("nymph")				M.change_mob_type( /mob/living/carbon/alien/diona , null, null, delmob )
 			if("human")				spawn_humanoid_species_admin(usr, M, delmob)
 			if("slime")				M.change_mob_type( /mob/living/carbon/slime , null, null, delmob )
@@ -171,26 +171,6 @@
 			if("constructbuilder")	M.change_mob_type( /mob/living/simple_animal/construct/builder , null, null, delmob )
 			if("constructwraith")	M.change_mob_type( /mob/living/simple_animal/construct/wraith , null, null, delmob )
 			if("shade")				M.change_mob_type( /mob/living/simple_animal/shade , null, null, delmob )
-			if("meme")
-				var/mob/living/parasite/meme/newmeme = new
-				M.mind.transfer_to(newmeme)
-				newmeme.clearHUD()
-
-				var/found = 0
-				for(var/mob/living/carbon/human/H in player_list) if(!H.parasites.len)
-					found = 1
-					newmeme.enter_host(H)
-
-					message_admins("[H] has become [newmeme.key]'s host")
-
-					break
-
-				// if there was no host, abort
-				if(!found)
-					newmeme.mind.transfer_to(M)
-					message_admins("Failed to find host for meme [M.key]. Aborting.")
-
-				qdel(M)
 
 	/////////////////////////////////////new ban stuff
 	else if(href_list["unbanf"])
@@ -304,7 +284,7 @@
 			to_chat(usr, "<span class='warning'>You do not have the appropriate permissions to add bans!</span>")
 			return
 
-		if(check_rights(R_MOD,0) && !check_rights(R_ADMIN, 0) && !config.mods_can_job_tempban) // If mod and tempban disabled
+		if(check_rights(R_MOD,0) && !check_rights(R_ADMIN, 0) && !GLOB.config.mods_can_job_tempban) // If mod and tempban disabled
 			to_chat(usr, "<span class='warning'>Mod jobbanning is disabled!</span>")
 			return
 
@@ -318,8 +298,8 @@
 				var/mins = input(usr,"How long (in minutes)?","Ban time",1440) as num|null
 				if(!mins)
 					return
-				if(check_rights(R_MOD, 0) && !check_rights(R_BAN, 0) && mins > config.mod_tempban_max)
-					to_chat(usr, "<span class='warning'>Moderators can only job tempban up to [config.mod_tempban_max] minutes!</span>")
+				if(check_rights(R_MOD, 0) && !check_rights(R_BAN, 0) && mins > GLOB.config.mod_tempban_max)
+					to_chat(usr, "<span class='warning'>Moderators can only job tempban up to [GLOB.config.mod_tempban_max] minutes!</span>")
 					return
 				if(mins >= 525600) mins = 525599
 				var/reason = sanitize(input(usr,"Reason?","reason","Griefer") as text|null)
@@ -327,7 +307,7 @@
 					return
 				AddBan(M.ckey, M.computer_id, reason, usr.ckey, 1, mins)
 				ban_unban_log_save("[usr.client.ckey] has banned [M.ckey]. - Reason: [reason] - This will be removed in [mins] minutes.")
-				if (config.ban_legacy_system)
+				if (GLOB.config.ban_legacy_system)
 					notes_add(M.ckey,"[usr.client.ckey] has banned [M.ckey]. - Reason: [reason] - This will be removed in [mins] minutes.",usr)
 				else
 					notes_add_sql(M.ckey, "[usr.client.ckey] has banned [M.ckey]. - Reason: [reason] - This will be removed in [mins] minutes.", usr, M.lastKnownIP, M.computer_id)
@@ -336,8 +316,8 @@
 				feedback_inc("ban_tmp",1)
 				DB_ban_record(BANTYPE_TEMP, M, mins, reason)
 				feedback_inc("ban_tmp_mins",mins)
-				if(config.banappeals)
-					to_chat_immediate(M, "<span class='warning'>To try to resolve this matter head to [config.banappeals]</span>")
+				if(GLOB.config.banappeals)
+					to_chat_immediate(M, "<span class='warning'>To try to resolve this matter head to [GLOB.config.banappeals]</span>")
 				else
 					to_chat_immediate(M, "<span class='warning'>No ban appeals URL has been set.</span>")
 				log_admin("[usr.client.ckey] has banned [M.ckey].\nReason: [reason]\nThis will be removed in [mins] minutes.",admin_key=key_name(usr),ckey=key_name(M))
@@ -358,12 +338,12 @@
 						AddBan(M.ckey, M.computer_id, reason, usr.ckey, 0, 0)
 				to_chat(M, "<span class='danger'><BIG>You have been banned by [usr.client.ckey].\nReason: [reason].</BIG></span>")
 				to_chat(M, "<span class='warning'>This is a permanent ban.</span>")
-				if(config.banappeals)
-					to_chat(M, "<span class='warning'>To try to resolve this matter head to [config.banappeals]</span>")
+				if(GLOB.config.banappeals)
+					to_chat(M, "<span class='warning'>To try to resolve this matter head to [GLOB.config.banappeals]</span>")
 				else
 					to_chat(M, "<span class='warning'>No ban appeals URL has been set.</span>")
 				ban_unban_log_save("[usr.client.ckey] has permabanned [M.ckey]. - Reason: [reason] - This is a permanent ban.")
-				if (config.ban_legacy_system)
+				if (GLOB.config.ban_legacy_system)
 					notes_add(M.ckey,"[usr.client.ckey] has permabanned [M.ckey]. - Reason: [reason] - This is a permanent ban.",usr)
 				else
 					notes_add_sql(M.ckey, "[usr.client.ckey] has permabanned [M.ckey]. - Reason: [reason] - This is a permanent ban.", usr, M.lastKnownIP, M.computer_id)
@@ -396,11 +376,11 @@
 		if(ROUND_IS_STARTED)
 			return alert(usr, "The game has already started.", null, null, null, null)
 		var/dat = {"<B>What mode do you wish to play?</B><HR>"}
-		for(var/mode in config.modes)
-			dat += {"<A href='?src=\ref[src];c_mode2=[mode]'>[config.mode_names[mode]]</A><br>"}
+		for(var/mode in GLOB.config.modes)
+			dat += {"<A href='?src=\ref[src];c_mode2=[mode]'>[GLOB.config.mode_names[mode]]</A><br>"}
 		dat += {"<A href='?src=\ref[src];c_mode2=secret'>Secret</A><br>"}
 		dat += {"<A href='?src=\ref[src];c_mode2=random'>Random</A><br>"}
-		dat += {"Now: [master_mode]"}
+		dat += {"Now: [GLOB.master_mode]"}
 		usr << browse(dat, "window=c_mode")
 
 	else if(href_list["f_secret"])
@@ -408,13 +388,13 @@
 
 		if(ROUND_IS_STARTED)
 			return alert(usr, "The game has already started.", null, null, null, null)
-		if(master_mode != ROUNDTYPE_STR_SECRET && master_mode != ROUNDTYPE_STR_MIXED_SECRET)
+		if(GLOB.master_mode != ROUNDTYPE_STR_SECRET && GLOB.master_mode != ROUNDTYPE_STR_MIXED_SECRET)
 			return alert(usr, "The game mode has to be secret!", null, null, null, null)
 		var/dat = {"<B>What game mode do you want to force secret to be? Use this if you want to change the game mode, but want the players to believe it's secret. This will only work if the current game mode is secret.</B><HR>"}
-		for(var/mode in config.modes)
-			dat += {"<A href='?src=\ref[src];f_secret2=[mode]'>[config.mode_names[mode]]</A><br>"}
+		for(var/mode in GLOB.config.modes)
+			dat += {"<A href='?src=\ref[src];f_secret2=[mode]'>[GLOB.config.mode_names[mode]]</A><br>"}
 		dat += {"<A href='?src=\ref[src];f_secret2=secret'>Random (default)</A><br>"}
-		dat += {"Now: [secret_force_mode]"}
+		dat += {"Now: [GLOB.secret_force_mode]"}
 		usr << browse(dat, "window=f_secret")
 
 	else if(href_list["c_mode2"])
@@ -422,12 +402,12 @@
 
 		if (ROUND_IS_STARTED)
 			return alert(usr, "The game has already started.", null, null, null, null)
-		master_mode = href_list["c_mode2"]
-		log_admin("[key_name(usr)] set the mode as [master_mode].",admin_key=key_name(usr))
-		message_admins("<span class='notice'>[key_name_admin(usr)] set the mode as [master_mode].</span>", 1)
-		to_world("<span class='notice'><b>The mode is now: [master_mode]</b></span>")
+		GLOB.master_mode = href_list["c_mode2"]
+		log_admin("[key_name(usr)] set the mode as [GLOB.master_mode].",admin_key=key_name(usr))
+		message_admins("<span class='notice'>[key_name_admin(usr)] set the mode as [GLOB.master_mode].</span>", 1)
+		to_world("<span class='notice'><b>The mode is now: [GLOB.master_mode]</b></span>")
 		Game() // updates the main game menu
-		SSpersist_config.last_gamemode = master_mode
+		SSpersistent_configuration.last_gamemode = GLOB.master_mode
 		.(href, list("c_mode"=1))
 
 	else if(href_list["f_secret2"])
@@ -435,11 +415,11 @@
 
 		if(ROUND_IS_STARTED)
 			return alert(usr, "The game has already started.", null, null, null, null)
-		if(master_mode != "secret")
+		if(GLOB.master_mode != "secret")
 			return alert(usr, "The game mode has to be secret!", null, null, null, null)
-		secret_force_mode = href_list["f_secret2"]
-		log_admin("[key_name(usr)] set the forced secret mode as [secret_force_mode].",admin_key=key_name(usr))
-		message_admins("<span class='notice'>[key_name_admin(usr)] set the forced secret mode as [secret_force_mode].</span>", 1)
+		GLOB.secret_force_mode = href_list["f_secret2"]
+		log_admin("[key_name(usr)] set the forced secret mode as [GLOB.secret_force_mode].",admin_key=key_name(usr))
+		message_admins("<span class='notice'>[key_name_admin(usr)] set the forced secret mode as [GLOB.secret_force_mode].</span>", 1)
 		Game() // updates the main game menu
 		.(href, list("f_secret"=1))
 
@@ -452,8 +432,8 @@
 
 	else if(href_list["trigger_psi_latencies"])
 		var/datum/psi_complexus/psi = locate(href_list["trigger_psi_latencies"])
-		log_and_message_admins("triggered psi latencies for [key_name(psi.owner)].")
-		psi.check_latency_trigger(100, "outside intervention", redactive = TRUE)
+		log_and_message_admins("triggered psionics for [key_name(psi.owner)].")
+		psi.check_psionic_trigger(100, "outside intervention", redactive = TRUE)
 
 	else if(href_list["monkeyone"])
 		if(!check_rights(R_SPAWN))	return
@@ -536,7 +516,7 @@
 
 		M.Paralyse(5)
 		sleep(5)
-		M.forceMove(pick(tdome1))
+		M.forceMove(pick(GLOB.tdome1))
 		spawn(50)
 			to_chat(M, "<span class='notice'>You have been sent to the Thunderdome.</span>")
 		log_admin("[key_name(usr)] has sent [key_name(M)] to the thunderdome. (Team 1)",admin_key=key_name(usr),ckey=key_name(M))
@@ -561,7 +541,7 @@
 
 		M.Paralyse(5)
 		sleep(5)
-		M.forceMove(pick(tdome2))
+		M.forceMove(pick(GLOB.tdome2))
 		spawn(50)
 			to_chat(M, "<span class='notice'>You have been sent to the Thunderdome.</span>")
 		log_admin("[key_name(usr)] has sent [key_name(M)] to the thunderdome. (Team 2)",admin_key=key_name(usr),ckey=key_name(M))
@@ -583,7 +563,7 @@
 
 		M.Paralyse(5)
 		sleep(5)
-		M.forceMove(pick(tdomeadmin))
+		M.forceMove(pick(GLOB.tdomeadmin))
 		spawn(50)
 			to_chat(M, "<span class='notice'>You have been sent to the Thunderdome.</span>")
 		log_admin("[key_name(usr)] has sent [key_name(M)] to the thunderdome. (Admin.)",admin_key=key_name(usr),ckey=key_name(M))
@@ -609,10 +589,10 @@
 		if(istype(M, /mob/living/carbon/human))
 			var/mob/living/carbon/human/observer = M
 			observer.equip_to_slot_or_del(new /obj/item/clothing/under/suit_jacket(observer), slot_w_uniform)
-			observer.equip_to_slot_or_del(new /obj/item/clothing/shoes/black(observer), slot_shoes)
+			observer.equip_to_slot_or_del(new /obj/item/clothing/shoes/sneakers/black(observer), slot_shoes)
 		M.Paralyse(5)
 		sleep(5)
-		M.forceMove(pick(tdomeobserve))
+		M.forceMove(pick(GLOB.tdomeobserve))
 		spawn(50)
 			to_chat(M, "<span class='notice'>You have been sent to the Thunderdome.</span>")
 		log_admin("[key_name(usr)] has sent [key_name(M)] to the thunderdome. (Observer.)",admin_key=key_name(usr),ckey=key_name(M))
@@ -626,7 +606,7 @@
 			to_chat(usr, "This can only be used on instances of type /mob/living")
 			return
 
-		if(config.allow_admin_rev)
+		if(GLOB.config.allow_admin_rev)
 			L.revive()
 			message_admins("<span class='danger'>Admin [key_name_admin(usr)] healed / revived [key_name_admin(L)]!</span>", 1)
 			log_admin("[key_name(usr)] healed / Revived [key_name(L)]",admin_key=key_name(usr),ckey=key_name(L))
@@ -703,18 +683,22 @@
 		C.jumptomob(M)
 
 	else if(href_list["check_antagonist"])
-		check_antagonists()
+		var/static/datum/tgui_module/moderator/shared/check_antagonists/global_check_antags = new()
+		global_check_antags.ui_interact(usr)
 
 	else if(href_list["adminplayerobservecoodjump"])
-		if(!check_rights(R_ADMIN|R_MOD))	return
+		if(!check_rights(R_ADMIN|R_MOD))
+			return
+		if(isnewplayer(usr))
+			return
 
 		var/x = text2num(href_list["X"])
 		var/y = text2num(href_list["Y"])
 		var/z = text2num(href_list["Z"])
 
 		var/client/C = usr.client
-		if(!isobserver(usr))	C.admin_ghost()
-		sleep(2)
+		if(!isobserver(usr))
+			C.admin_ghost()
 		C.jumptocoord(x,y,z)
 
 	else if(href_list["take_ticket"])
@@ -886,6 +870,24 @@
 		else
 			to_chat(src.owner, "The person you are trying to contact does not have functional radio equipment.")
 
+	else if(href_list["CentcommHiveReply"])
+		var/mob/living/carbon/human/H = locate(href_list["CentcommHiveReply"])
+		if(!istype(H))
+			to_chat(usr, "This can only be used on instances of type /mob/living/carbon/human")
+			return
+		if(!isvaurca(H))
+			to_chat(usr, "This can only be used on Vaurca.")
+			return
+		if(!(GLOB.all_languages[LANGUAGE_VAURCA] in H.languages))
+			to_chat(usr, "The person you are trying to contact is incapable of recieving Hivenet transmissions.")
+			return
+		var/input = sanitize(input(src.owner, "Please enter a message to reply to [key_name(H)] via the Hivenet.", "Outgoing transmission from the Hive...", ""))
+		if(!input)	return
+		to_chat(src.owner, "You sent [input] to [H] via a secure Hivenet channel.")
+		log_admin("[src.owner] replied to [key_name(H)]'s Hivenet message with the message [input].", admin_key=key_name(src.owner), ckey=key_name(H))
+		to_chat(H, SPAN_INFO("You feel something shifting in the Hivenet, an encrypted whisper transmitted directly to your neural socket. Message as follows."))
+		to_chat(H, SPAN_NOTICE(SPAN_BOLD("\"[input]\"")))
+		to_chat(H, SPAN_INFO("Message ends."))
 
 	else if(href_list["SyndicateReply"])
 		var/mob/living/carbon/human/H = locate(href_list["SyndicateReply"])
@@ -1011,7 +1013,7 @@
 	else if(href_list["object_list"])			//this is the laggiest thing ever
 		if(!check_rights(R_SPAWN))	return
 
-		if(!config.allow_admin_spawning)
+		if(!GLOB.config.allow_admin_spawning)
 			to_chat(usr, "Spawning of items is not allowed.")
 			return
 
@@ -1399,7 +1401,7 @@
 				to_chat(usr, "[M] is illegal type, must be /mob!")
 				return
 			var/lang2toggle = href_list["lang"]
-			var/datum/language/L = all_languages[lang2toggle]
+			var/datum/language/L = GLOB.all_languages[lang2toggle]
 
 			if(L in M.languages)
 				if(!M.remove_language(lang2toggle))
@@ -1417,7 +1419,7 @@
 		var/add = sanitize(input("Add Player Info") as null|text)
 		if(!add) return
 
-		if (config.ban_legacy_system)
+		if (GLOB.config.ban_legacy_system)
 			notes_add(key,add,usr)
 		else
 			notes_add_sql(key, add, usr)
@@ -1489,13 +1491,13 @@
 		access_control_topic(href_list["access_control"])
 		return
 
-mob/living/proc/can_centcom_reply()
+/mob/living/proc/can_centcom_reply()
 	return 0
 
-mob/living/carbon/human/can_centcom_reply()
+/mob/living/carbon/human/can_centcom_reply()
 	return istype(l_ear, /obj/item/device/radio/headset) || istype(r_ear, /obj/item/device/radio/headset)
 
-mob/living/silicon/ai/can_centcom_reply()
+/mob/living/silicon/ai/can_centcom_reply()
 	return common_radio != null && !check_unable(2)
 
 /client/proc/extra_admin_link()
@@ -1524,7 +1526,7 @@ mob/living/silicon/ai/can_centcom_reply()
 	. += target.extra_admin_link(source)
 
 /proc/spawn_humanoid_species_admin(var/mob/user, var/mob/M, var/delmob)
-	var/input = input(user, "Select a species:") as null|anything in all_species
+	var/input = input(user, "Select a species:") as null|anything in GLOB.all_species
 	if(!input)
 		return
 	M.change_mob_type( /mob/living/carbon/human , null, null, delmob, input)

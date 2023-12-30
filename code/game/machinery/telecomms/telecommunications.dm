@@ -62,7 +62,7 @@
 
 /obj/machinery/telecomms/LateInitialize()
 	if(current_map.use_overmap && !linked)
-		var/my_sector = map_sectors["[z]"]
+		var/my_sector = GLOB.map_sectors["[z]"]
 		if (istype(my_sector, /obj/effect/overmap/visitable))
 			attempt_hook_up(my_sector)
 
@@ -113,10 +113,10 @@
 	icon_state = state
 
 /obj/machinery/telecomms/process()
-	if(!use_power) return
+	if(!use_power) return PROCESS_KILL
 	if(inoperable(EMPED))
 		toggle_power(additional_flags = EMPED)
-		return
+		return PROCESS_KILL
 
 	// Check heat and generate some
 	check_heat()
@@ -124,17 +124,28 @@
 
 	if(traffic > 0)
 		toggle_power(POWER_USE_ACTIVE)
-	else
+	else if(use_power != POWER_USE_IDLE)
 		toggle_power(POWER_USE_IDLE)
+
+/obj/machinery/telecomms/toggle_power(power_set, additional_flags = 0)
+	. = ..()
+	if(use_power)
+		START_PROCESSING_MACHINE(src, MACHINERY_PROCESS_SELF)
+	else
+		STOP_PROCESSING_MACHINE(src, MACHINERY_PROCESS_SELF)
 
 /obj/machinery/telecomms/emp_act(severity)
 	. = ..()
+
 	if(stat & EMPED || !prob(100/severity))
 		return
+
 	stat |= EMPED
-	var/duration = (300 SECONDS)/severity
-	spawn(duration + rand(-20, 20))
-		stat &= ~EMPED
+	addtimer(CALLBACK(src, PROC_REF(post_emp_act)), (300 SECONDS) / severity)
+
+/obj/machinery/telecomms/proc/post_emp_act()
+	stat &= ~EMPED
+	toggle_power(POWER_USE_IDLE)
 
 /obj/machinery/telecomms/proc/check_heat()
 	// Checks heat from the environment and applies any integrity damage

@@ -23,12 +23,12 @@
 	onclose(user, "scroll")
 	return
 
-/obj/machinery/computer/artillerycontrol/Topic(href, href_list, var/datum/topic_state/state = default_state)
+/obj/machinery/computer/artillerycontrol/Topic(href, href_list, var/datum/ui_state/state = default_state)
 	if(..())
 		return 1
 
 	if(href_list["fireArea"])
-		var/area/A = input("Area to jump bombard", "Open Fire") in all_areas
+		var/area/A = input("Area to jump bombard", "Open Fire") in GLOB.all_areas
 		var/turf/loc = pick(get_area_turfs(A))
 		announce_and_fire(loc, usr)
 	else if(href_list["fireCords"])

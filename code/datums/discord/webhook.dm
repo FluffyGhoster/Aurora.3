@@ -6,7 +6,7 @@
 var/list/global_webhooks = list()
 
 /proc/global_initialize_webhooks()
-	if(!establish_db_connection(dbcon))
+	if(!establish_db_connection(GLOB.dbcon))
 		var/file = return_file_text("config/webhooks.json")
 		if (file)
 			var/jsonData = json_decode(file)
@@ -23,7 +23,7 @@ var/list/global_webhooks = list()
 		else
 			return 0
 	else
-		var/DBQuery/query = dbcon.NewQuery("SELECT url, tags, mention FROM ss13_webhooks")
+		var/DBQuery/query = GLOB.dbcon.NewQuery("SELECT url, tags, mention FROM ss13_webhooks")
 		query.Execute()
 		while (query.NextRow())
 			var/url = query.item[1]
@@ -60,13 +60,19 @@ var/list/global_webhooks = list()
 	var/datum/http_response/res = req.into_response()
 
 	if (res.errored)
-		log_debug("Webhooks: proc error while sending: [res.error]")
+		LOG_DEBUG("Webhooks: proc error while sending: [res.error]")
 		return FALSE
 	else
 		return TRUE
 
 /proc/post_webhook_event(var/tag, var/list/data)
 	set background = 1
+
+	var/escape_text
+	if(evacuation_controller.evacuation_type == TRANSFER_EMERGENCY)
+		escape_text = "escaped"
+	else
+		escape_text = "transfered"
 
 	if (!global_webhooks.len)
 		return
@@ -109,7 +115,7 @@ var/list/global_webhooks = list()
 			emb["description"] += data["antags"]
 			if(data["survivours"] > 0)
 				emb["description"] += "There [data["survivours"]>1 ? "were **[data["survivours"]] survivors**" : "was **one survivor**"]"
-				emb["description"] += " ([data["escaped"]>0 ? data["escaped"] : "none"] [evacuation_controller.emergency_evacuation ? "escaped" : "transferred"]) and **[data["ghosts"]] ghosts**."
+				emb["description"] += " ([data["escaped"]>0 ? data["escaped"] : "none"] [escape_text]) and **[data["ghosts"]] ghosts**."
 			else
 				emb["description"] += "There were **no survivors** ([data["ghosts"]] ghosts)."
 			OutData["embeds"] = list(emb)

@@ -104,7 +104,7 @@
 				try
 					pref.vars[preference] = text2num(jobs[preference])
 				catch(var/exception/e)
-					log_debug("LOADING: Bad job preference key: [preference].")
+					LOG_DEBUG("LOADING: Bad job preference key: [preference].")
 					log_debug(e.desc)
 
 	pref.alternate_option  = sanitize_integer(text2num(pref.alternate_option), 0, 1, initial(pref.alternate_option))
@@ -123,7 +123,7 @@
 
 	if (!SSjobs.safe_to_sanitize)
 		if (!SSjobs.deferred_preference_sanitizations[src])
-			SSjobs.deferred_preference_sanitizations[src] = CALLBACK(src, .proc/late_sanitize, sql_load)
+			SSjobs.deferred_preference_sanitizations[src] = CALLBACK(src, PROC_REF(late_sanitize), sql_load)
 	else
 		late_sanitize(sql_load)
 
@@ -188,7 +188,7 @@
 			dat += "<del>[dispRank]</del></td><td><b> \[<a href='?src=\ref[user.client];view_jobban=[rank];'>BANNED</a>]</b></td></tr>"
 			continue
 		if(job.blacklisted_species) // check for restricted species
-			var/datum/species/S = all_species[pref.species]
+			var/datum/species/S = GLOB.all_species[pref.species]
 			if(S.name in job.blacklisted_species)
 				dat += "<del>[dispRank]</del></td><td><b> \[SPECIES RESTRICTED]</b></td></tr>"
 				continue
@@ -196,6 +196,10 @@
 		if(C.job_species_blacklist[job.title] && (pref.species in C.job_species_blacklist[job.title]))
 			dat += "<del>[dispRank]</del></td><td><b> \[SPECIES RESTRICTED]</b></td></tr>"
 			continue
+		if(job.blacklisted_citizenship)
+			if(C.name in job.blacklisted_citizenship)
+				dat += "<del>[dispRank]</del></td><td><b> \[BACKGROUND RESTRICTED]</b></td></tr>"
+				continue
 		if(job.alt_titles && (LAZYLEN(pref.GetValidTitles(job)) > 1))
 			dispRank = "<span width='60%' align='center'>&nbsp<a href='?src=\ref[src];select_alt_title=\ref[job]'>\[[pref.GetPlayerAltTitle(job)]\]</a></span>"
 		if((pref.job_civilian_low & ASSISTANT) && (rank != "Assistant"))
@@ -447,17 +451,17 @@
 	dat += "</tr>"
 	dat += "</table><center><hr/>"
 
-	dat += "You can learn more about this faction on <a href='?src=\ref[user.client];JSlink=wiki;wiki_page=[replacetext(faction.name, " ", "_")]'>the wiki</a>.</center>"
+	dat += "You can learn more about this faction on <a href='?src=\ref[user.client];JSlink=wiki;wiki_page=[replacetext(faction.name, " ", "_")]'>the wiki</a>."
 
 	if (selected_faction == pref.faction)
-		dat += "<br>\[Faction Already Selected\]"
+		dat += "<br>\[Faction selected\]"
 	else if (faction.can_select(pref,user))
-		dat += "<br>\[<a href='?src=\ref[src];faction_select=[html_encode(selected_faction)]'>Select Faction</a>\]"
+		dat += "<br>\[<a href='?src=\ref[src];faction_select=[html_encode(selected_faction)]'>Select faction</a>\]"
 	else
 		dat += "<br><span class='warning'>[faction.get_selection_error(pref, user)]</span>"
+	dat += "</center>"
 
-	send_theme_resources(user)
-	user << browse(enable_ui_theme(user, dat.Join()), "window=factionpreview;size=750x450")
+	user << browse(dat.Join(), "window=factionpreview;size=750x450")
 
 /datum/category_item/player_setup_item/occupation/proc/validate_and_set_faction(selected_faction)
 	var/datum/faction/faction = SSjobs.name_factions[selected_faction]
@@ -479,10 +483,10 @@
 	if (!job)
 		return
 	var/choices = list(job.title) + job.alt_titles
-	if((global.all_species[src.species].spawn_flags & NO_AGE_MINIMUM))
+	if((GLOB.all_species[src.species].spawn_flags & NO_AGE_MINIMUM))
 		return choices
 	for(var/t in choices)
-		if (src.age >= (job.get_alt_character_age(t) || job.get_minimum_character_age(species)))
+		if (src.age >= (job.get_alt_character_age(species, t) || job.get_minimum_character_age(species)))
 			continue
 		choices -= t
 	return choices

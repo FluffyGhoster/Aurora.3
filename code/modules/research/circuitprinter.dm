@@ -8,7 +8,7 @@ using metal and glass, it uses glass and reagents (usually sulphuric acid).
 	name = "circuit imprinter"
 	desc = "An advanced device that can only be operated via a nearby RnD console, it can print any circuitboard the user requests, provided it has the correct materials to do so."
 	icon_state = "circuit_imprinter"
-	flags = OPENCONTAINER
+	atom_flags = ATOM_FLAG_OPEN_CONTAINER
 
 	var/list/materials = list(DEFAULT_WALL_MATERIAL = 0, MATERIAL_GLASS = 0, MATERIAL_GOLD = 0, MATERIAL_SILVER = 0, MATERIAL_PHORON = 0, MATERIAL_URANIUM = 0, MATERIAL_DIAMOND = 0)
 	var/list/datum/design/queue = list()
@@ -187,7 +187,7 @@ using metal and glass, it uses glass and reagents (usually sulphuric acid).
 			ret += "[D.materials[M] - materials[M]] [M]"
 	for(var/C in D.chemicals)
 		if(!reagents.has_reagent(C, D.chemicals[C]))
-			var/decl/reagent/R = decls_repository.get_decl(C)
+			var/singleton/reagent/R = GET_SINGLETON(C)
 			if(ret != "")
 				ret += ", "
 			ret += "[R.name]"

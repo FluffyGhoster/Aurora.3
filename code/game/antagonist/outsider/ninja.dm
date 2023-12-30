@@ -26,7 +26,7 @@ var/datum/antagonist/ninja/ninjas
 	ninjas = src
 
 /datum/antagonist/ninja/attempt_random_spawn()
-	if(config.ninjas_allowed) ..()
+	if(GLOB.config.ninjas_allowed) ..()
 
 /datum/antagonist/ninja/create_objectives(var/datum/mind/ninja)
 
@@ -132,7 +132,7 @@ var/datum/antagonist/ninja/ninjas
 		if(5)
 			directive += "We are currently negotiating with [current_map.company_name] [current_map.boss_name]. Prioritize saving human lives over ending them."
 		if(6)
-			directive += "We are engaged in a legal dispute over [current_map.station_name]. If a laywer is present on board, force their cooperation in the matter."
+			directive += "We are engaged in a legal dispute over [current_map.station_name]. If a lawyer is present on board, force their cooperation in the matter."
 		if(7)
 			directive += "A financial backer has made an offer we cannot refuse. Implicate criminal involvement in the operation."
 		if(8)

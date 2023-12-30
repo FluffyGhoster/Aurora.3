@@ -3,7 +3,7 @@
 
 /obj/machinery/telecomms/hub/preset_map/LateInitialize()
 	if(current_map.use_overmap && !linked)
-		var/my_sector = map_sectors["[z]"]
+		var/my_sector = GLOB.map_sectors["[z]"]
 		if (istype(my_sector, /obj/effect/overmap/visitable))
 			attempt_hook_up(my_sector)
 
@@ -40,7 +40,7 @@
 
 /obj/machinery/telecomms/receiver/preset_map/LateInitialize()
 	if(current_map.use_overmap && !linked)
-		var/my_sector = map_sectors["[z]"]
+		var/my_sector = GLOB.map_sectors["[z]"]
 		if (istype(my_sector, /obj/effect/overmap/visitable))
 			attempt_hook_up(my_sector)
 
@@ -50,7 +50,7 @@
 		id = "[preset_name] Receiver"
 		network = "tcomm_[name_lower]"
 		freq_listening += list(assign_away_freq(preset_name), HAIL_FREQ)
-		if (use_common)
+		if (use_common || linked.use_common)
 			freq_listening += PUB_FREQ
 		autolinkers = list(
 			"[name_lower]_receiver"
@@ -84,7 +84,7 @@
 
 /obj/machinery/telecomms/bus/preset_map/LateInitialize()
 	if(current_map.use_overmap && !linked)
-		var/my_sector = map_sectors["[z]"]
+		var/my_sector = GLOB.map_sectors["[z]"]
 		if (istype(my_sector, /obj/effect/overmap/visitable))
 			attempt_hook_up(my_sector)
 
@@ -94,7 +94,7 @@
 		id = "[preset_name] Bus"
 		network = "tcomm_[name_lower]"
 		freq_listening += list(assign_away_freq(preset_name), HAIL_FREQ)
-		if (use_common)
+		if (use_common || linked.use_common)
 			freq_listening += PUB_FREQ
 		autolinkers = list(
 			"[name_lower]_processor",
@@ -106,33 +106,33 @@
 /obj/machinery/telecomms/bus/preset_one
 	id = "Bus 1"
 	network = "tcommsat"
-	freq_listening = list(SCI_FREQ, MED_FREQ)
-	autolinkers = list("processor1", "science", "medical")
+	freq_listening = list(PUB_FREQ, ENT_FREQ, HAIL_FREQ, AI_FREQ, SRV_FREQ)
+	autolinkers = list("processor1", "common", "service", "unused")
 
-/obj/machinery/telecomms/bus/preset_two
-	id = "Bus 2"
-	network = "tcommsat"
-	freq_listening = list(SUP_FREQ, SRV_FREQ)
-	autolinkers = list("processor2", "supply", "service", "unused")
-
-/obj/machinery/telecomms/bus/preset_two/Initialize()
+/obj/machinery/telecomms/bus/preset_one/Initialize()
 	for(var/i = PUBLIC_LOW_FREQ, i < PUBLIC_HIGH_FREQ, i += 2)
 		if(i == PUB_FREQ || i == ENT_FREQ)
 			continue
 		freq_listening |= i
 	return ..()
 
+/obj/machinery/telecomms/bus/preset_two
+	id = "Bus 2"
+	network = "tcommsat"
+	freq_listening = list(COMM_FREQ, SEC_FREQ)
+	autolinkers = list("processor2", "command", "security")
+
 /obj/machinery/telecomms/bus/preset_three
 	id = "Bus 3"
 	network = "tcommsat"
-	freq_listening = list(SEC_FREQ, COMM_FREQ)
-	autolinkers = list("processor3", "security", "command")
+	freq_listening = list(MED_FREQ, SCI_FREQ)
+	autolinkers = list("processor3", "medical", "science")
 
 /obj/machinery/telecomms/bus/preset_four
 	id = "Bus 4"
 	network = "tcommsat"
-	freq_listening = list(ENG_FREQ, AI_FREQ, PUB_FREQ, ENT_FREQ, HAIL_FREQ)
-	autolinkers = list("processor4", "engineering", "common")
+	freq_listening = list(ENG_FREQ, SUP_FREQ)
+	autolinkers = list("processor4", "engineering", "supply")
 
 /obj/machinery/telecomms/bus/preset_cent
 	id = "CentComm Bus"
@@ -145,7 +145,7 @@
 
 /obj/machinery/telecomms/processor/preset_map/LateInitialize()
 	if(current_map.use_overmap && !linked)
-		var/my_sector = map_sectors["[z]"]
+		var/my_sector = GLOB.map_sectors["[z]"]
 		if (istype(my_sector, /obj/effect/overmap/visitable))
 			attempt_hook_up(my_sector)
 
@@ -192,7 +192,7 @@
 
 /obj/machinery/telecomms/server/preset_map/LateInitialize()
 	if(current_map.use_overmap && !linked)
-		var/my_sector = map_sectors["[z]"]
+		var/my_sector = GLOB.map_sectors["[z]"]
 		if (istype(my_sector, /obj/effect/overmap/visitable))
 			attempt_hook_up(my_sector)
 
@@ -205,7 +205,7 @@
 			assign_away_freq(preset_name),
 			HAIL_FREQ
 		)
-		if(use_common)
+		if(use_common || linked.use_common)
 			freq_listening += PUB_FREQ
 		autolinkers = list(
 			"[name_lower]_server"
@@ -282,7 +282,7 @@
 
 /obj/machinery/telecomms/broadcaster/preset_map/LateInitialize()
 	if(current_map.use_overmap && !linked)
-		var/my_sector = map_sectors["[z]"]
+		var/my_sector = GLOB.map_sectors["[z]"]
 		if (istype(my_sector, /obj/effect/overmap/visitable))
 			attempt_hook_up(my_sector)
 

@@ -1,7 +1,7 @@
 /obj/structure/closet/secure_closet/personal
 	name = "personal closet"
 	desc = "It's a secure locker for personnel. The first card swiped gains control."
-	req_access = list(access_all_personal_lockers)
+	req_access = list(ACCESS_ALL_PERSONAL_LOCKERS)
 	var/registered_name = null
 
 /obj/structure/closet/secure_closet/personal/fill()
@@ -20,7 +20,7 @@
 		new /obj/item/clothing/under/medical_gown(src)
 	else
 		new /obj/item/clothing/under/medical_gown/white(src)
-	new /obj/item/clothing/shoes/white( src )
+	new /obj/item/clothing/shoes/sneakers( src )
 
 
 /obj/structure/closet/secure_closet/personal/cabinet
@@ -70,7 +70,7 @@
 		if(emag_act(INFINITY, user, "The locker has been sliced open by [user] with \an [blade]!", "You hear metal being sliced and sparks flying."))
 			blade.spark_system.queue()
 			playsound(loc, 'sound/weapons/blade.ogg', 50, 1)
-			playsound(loc, /decl/sound_category/spark_sound, 50, 1)
+			playsound(loc, /singleton/sound_category/spark_sound, 50, 1)
 	else
 		to_chat(user, "<span class='warning'>Access Denied</span>")
 	return

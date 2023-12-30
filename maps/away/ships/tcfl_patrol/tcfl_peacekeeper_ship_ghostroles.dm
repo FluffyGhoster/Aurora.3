@@ -45,7 +45,7 @@
 /datum/outfit/admin/tcfl_peacekeeper/post_equip(mob/living/carbon/human/H, visualsOnly = FALSE)
 	. = ..()
 	if(isvaurca(H))
-		H.equip_to_slot_or_del(new /obj/item/clothing/mask/breath/vaurca/filter(H), slot_wear_mask)
+		H.equip_to_slot_or_del(new /obj/item/clothing/mask/gas/vaurca/filter(H), slot_wear_mask)
 		var/obj/item/organ/internal/vaurca/preserve/preserve = H.internal_organs_by_name[BP_PHORON_RESERVE]
 		H.internal = preserve
 		H.internals.icon_state = "internal1"
@@ -54,7 +54,7 @@
 		H.equip_or_collect(new /obj/item/storage/pill_bottle/rmt, slot_in_backpack)
 
 /datum/outfit/admin/tcfl_peacekeeper/get_id_access()
-	return list(access_tcfl_peacekeeper_ship, access_external_airlocks)
+	return list(ACCESS_TCFL_PEACEKEEPER_SHIP, ACCESS_EXTERNAL_AIRLOCKS)
 
 /datum/ghostspawner/human/tcfl_peacekeeper/prefect
 	short_name = "tcfl_peacekeeper_prefect"
@@ -105,4 +105,4 @@
 
 /obj/item/card/id/tcfl_ship
 	name = "tcfl peacekeeper ship id"
-	access = list(access_tcfl_peacekeeper_ship, access_external_airlocks)
+	access = list(ACCESS_TCFL_PEACEKEEPER_SHIP, ACCESS_EXTERNAL_AIRLOCKS)

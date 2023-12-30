@@ -11,7 +11,7 @@
 	icon = 'icons/obj/assemblies/electronic_tools.dmi'
 	icon_state = "wirer-wire"
 	item_state = "wirer"
-	flags = CONDUCT
+	obj_flags = OBJ_FLAG_CONDUCTABLE
 	w_class = ITEMSIZE_SMALL
 	var/datum/integrated_io/selected_io
 	var/mode = WIRE
@@ -109,7 +109,8 @@
 	settings to specific circuits, or for debugging purposes.  It can also pulse activation pins."
 	icon = 'icons/obj/assemblies/electronic_tools.dmi'
 	icon_state = "debugger"
-	flags = CONDUCT | NOBLUDGEON
+	obj_flags = OBJ_FLAG_CONDUCTABLE
+	item_flags = ITEM_FLAG_NO_BLUDGEON
 	w_class = ITEMSIZE_SMALL
 	var/data_to_write = null
 	var/accepting_refs = 0
@@ -170,10 +171,10 @@
 	desc = "A combination autopainter and flash anodizer designed to give electronic assemblies a colorful, wear-resistant finish."
 	icon = 'icons/obj/assemblies/electronic_tools.dmi'
 	icon_state = "detailer"
-	item_flags = NOBLUDGEON
+	item_flags = ITEM_FLAG_NO_BLUDGEON
 	w_class = ITEMSIZE_SMALL
 	var/detail_color = COLOR_ASSEMBLY_WHITE
-	var/list/color_list = list(
+	var/static/list/color_list = list(
 		"black" = COLOR_ASSEMBLY_BLACK,
 		"machine gray" = COLOR_ASSEMBLY_BGRAY,
 		"white" = COLOR_ASSEMBLY_WHITE,
@@ -204,7 +205,7 @@
 
 /obj/item/device/integrated_electronics/detailer/attack_self(mob/user)
 	var/color_choice = input(user, "Select color.", "Assembly Detailer", detail_color) as null|anything in color_list
-	if(!color_list[color_choice])
+	if(!color_choice)
 		return
 	if(!in_range(src, user))
 		return

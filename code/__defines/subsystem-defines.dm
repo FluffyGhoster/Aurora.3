@@ -43,31 +43,49 @@
 
 // -- SSatoms stuff --
 // Technically this check will fail if someone loads a map mid-round, but that's not enabled right now.
+
+///TRUE if the INITIAL SSatoms initialization has finished, aka the atoms are initialized and mapload has finished
 #define SSATOMS_IS_PROBABLY_DONE (SSatoms.initialized == INITIALIZATION_INNEW_REGULAR)
 
-//type and all subtypes should always call Initialize in New()
+///type and all subtypes should always immediately call Initialize in New()
 #define INITIALIZE_IMMEDIATE(X) ##X/New(loc, ...){\
-    ..();\
-    if(!initialized) {\
-        args[1] = TRUE;\
-        SSatoms.InitAtom(src, args);\
-    }\
+	..();\
+	if(!(flags_1 & INITIALIZED_1)) {\
+		var/previous_initialized_value = SSatoms.initialized;\
+		SSatoms.initialized = INITIALIZATION_INNEW_MAPLOAD;\
+		args[1] = TRUE;\
+		SSatoms.InitAtom(src, FALSE, args);\
+		SSatoms.initialized = previous_initialized_value;\
+	}\
 }
 
-// 	SSatoms Initialization state.
-#define INITIALIZATION_INSSATOMS 0	//New should not call Initialize
-#define INITIALIZATION_INNEW_MAPLOAD 1	//New should call Initialize(TRUE)
-#define INITIALIZATION_INNEW_REGULAR 2	//New should call Initialize(FALSE)
+/* Initialization subsystem */
 
-//	Initialize() hints for SSatoms.
-#define INITIALIZE_HINT_NORMAL 0    //Nothing happens
-#define INITIALIZE_HINT_LATELOAD 1  //Call LateInitialize
-#define INITIALIZE_HINT_QDEL 2  //Call qdel on the atom
-#define INITIALIZE_HINT_LATEQDEL 3	//Call qdel on the atom instead of LateInitialize
+///New should not call Initialize
+#define INITIALIZATION_INSSATOMS 0
+///New should call Initialize(TRUE)
+#define INITIALIZATION_INNEW_MAPLOAD 2
+///New should call Initialize(FALSE)
+#define INITIALIZATION_INNEW_REGULAR 1
+
+///Nothing happens.
+#define INITIALIZE_HINT_NORMAL 0
+
+/**
+ * call LateInitialize at the end of all atom Initalization
+ *
+ * The item will be added to the late_loaders list, this is iterated over after
+ * initalization of subsystems is complete and calls LateInitalize on the atom
+ * see [this file for the LateIntialize proc](atom.html#proc/LateInitialize)
+ */
+#define INITIALIZE_HINT_LATELOAD 1
+
+///Call qdel on the atom after intialization
+#define INITIALIZE_HINT_QDEL 2
 
 
 // -- SSoverlays --
-#define CUT_OVERLAY_IN(ovr, time) addtimer(CALLBACK(src, /atom/.proc/cut_overlay, ovr), time, TIMER_STOPPABLE | TIMER_CLIENT_TIME)
+#define CUT_OVERLAY_IN(ovr, time) addtimer(CALLBACK(src, TYPE_PROC_REF(/atom, cut_overlay), ovr), time, TIMER_STOPPABLE | TIMER_CLIENT_TIME)
 #define ATOM_USING_SSOVERLAY(atom) (atom.our_overlays || atom.priority_overlays)
 
 // -- SSticker --
@@ -101,6 +119,9 @@
 // -- SSmob_ai --
 #define MOB_START_THINKING(mob) if (!mob.thinking_enabled) { SSmob_ai.processing += mob; mob.on_think_enabled(); mob.thinking_enabled = TRUE; }
 #define MOB_STOP_THINKING(mob) SSmob_ai.processing -= mob; mob.on_think_disabled(); mob.thinking_enabled = FALSE;
+
+#define MOB_SHIFT_TO_FAST_THINKING(mob) if(!mob.is_fast_processing) { SSmob_ai.processing -= mob; SSmob_fast_ai.processing += mob; mob.is_fast_processing = TRUE; }
+#define MOB_SHIFT_TO_NORMAL_THINKING(mob) if(mob.is_fast_processing) { SSmob_fast_ai.processing -= mob; SSmob_ai.processing += mob; mob.is_fast_processing = FALSE; }
 
 
 // - SSrecords --
@@ -143,3 +164,5 @@
 #define JOBROLE_DEFAULT 0                    // This is the default "job role", no special meaning.
 #define JOBROLE_SUPERVISOR (1 << 0)          // Indicates that the job is a supervisory position, i.e a head of department.
 #define SIMPLEDEPT(dept) list(dept = JOBROLE_DEFAULT)
+
+#define ASSET_CROSS_ROUND_CACHE_DIRECTORY "tmp/assets"

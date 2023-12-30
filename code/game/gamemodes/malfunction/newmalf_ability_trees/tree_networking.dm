@@ -10,26 +10,26 @@
 // BEGIN RESEARCH DATUMS
 
 /datum/malf_research_ability/networking/basic_hack
-	ability = new/datum/game_mode/malfunction/verb/basic_encryption_hack()
+	ability = /datum/game_mode/malfunction/verb/basic_encryption_hack
 	price = 25
-	next = new/datum/malf_research_ability/networking/advanced_hack()
+	next = /datum/malf_research_ability/networking/advanced_hack
 	name = "Basic Encryption Hack"
 
 /datum/malf_research_ability/networking/advanced_hack
-	ability = new/datum/game_mode/malfunction/verb/advanced_encryption_hack()
+	ability = /datum/game_mode/malfunction/verb/advanced_encryption_hack
 	price = 400
-	next = new/datum/malf_research_ability/networking/elite_hack()
+	next = /datum/malf_research_ability/networking/elite_hack
 	name = "Advanced Encryption Hack"
 
 /datum/malf_research_ability/networking/elite_hack
-	ability = new/datum/game_mode/malfunction/verb/elite_encryption_hack()
+	ability = /datum/game_mode/malfunction/verb/elite_encryption_hack
 	price = 1000
-	next = new/datum/malf_research_ability/networking/system_override()
+	next = /datum/malf_research_ability/networking/system_override
 	name = "Elite Encryption Hack"
 
 
 /datum/malf_research_ability/networking/system_override
-	ability = new/datum/game_mode/malfunction/verb/system_override()
+	ability = /datum/game_mode/malfunction/verb/system_override
 	price = 5000
 	name = "System Override"
 
@@ -105,13 +105,13 @@
 	var/reporttype = input(usr, "Choose whether to use a template or custom report.", "Create Command Report") in list("Template", "Custom", "Cancel")
 	switch(reporttype)
 		if("Template")
-			if(!config.sql_enabled)
+			if(!GLOB.config.sql_enabled)
 				to_chat(src, "<span class='notice'>DB Connection Disabled.</span>")
 				return
-			if (!establish_db_connection(dbcon))
+			if (!establish_db_connection(GLOB.dbcon))
 				to_chat(src, "<span class='notice'>Unable to connect to the database.</span>")
 				return
-			var/DBQuery/query = dbcon.NewQuery("SELECT title, message FROM ss13_ccia_general_notice_list WHERE deleted_at IS NULL")
+			var/DBQuery/query = GLOB.dbcon.NewQuery("SELECT title, message FROM ss13_ccia_general_notice_list WHERE deleted_at IS NULL")
 			query.Execute()
 
 			var/list/template_names = list()
@@ -143,7 +143,6 @@
 		var/resp = alert(usr, "Would you like it to appear as if CCIAMS made the report?",,"Yes","No")
 		if (resp == "Yes")
 			reportbody += "\n\n- CCIAMS, [commstation_name()]"
-		else
 
 	switch(alert("Should this be announced to the general population?",,"Yes","No"))
 		if("Yes")
@@ -289,7 +288,7 @@
 	user.hack_can_fail = 0
 	user.hacking = 0
 	user.system_override = 2
-	user.verbs += new/datum/game_mode/malfunction/verb/ai_destroy_station()
+	add_verb(user, /datum/game_mode/malfunction/verb/ai_destroy_station)
 
 
 // END ABILITY VERBS

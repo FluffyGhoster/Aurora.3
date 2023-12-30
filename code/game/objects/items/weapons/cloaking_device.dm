@@ -9,7 +9,7 @@
 	icon = 'icons/obj/device.dmi'
 	icon_state = "shield0"
 	var/active = 0.0
-	flags = CONDUCT
+	obj_flags = OBJ_FLAG_CONDUCTABLE
 	item_state = "electronic"
 	throwforce = 10.0
 	throw_speed = 2
@@ -26,19 +26,17 @@
 
 /obj/item/cloaking_device/New()
 	..()
-	cloaking_devices += src
+	GLOB.cloaking_devices += src
 	cell = new /obj/item/cell/high(src)
 
 /obj/item/cloaking_device/Destroy()
 	. = ..()
-	cloaking_devices -= src
-
+	GLOB.cloaking_devices -= src
 
 /obj/item/cloaking_device/equipped(var/mob/user, var/slot)
 	..()
 	//Picked up or switched hands or worn
 	register_owner(user)
-
 
 //Handles dropped or thrown cloakers
 /obj/item/cloaking_device/dropped(var/mob/user)
@@ -94,11 +92,11 @@
 	STOP_PROCESSING(SSprocessing, src)
 
 /obj/item/cloaking_device/emp_act(severity)
+	. = ..()
+
 	deactivate()
 	if (cell)
 		cell.emp_act(severity)
-	..()
-
 
 /obj/item/cloaking_device/proc/register_owner(var/mob/user)
 	if (!owner || owner != user)
@@ -107,7 +105,6 @@
 
 	if (!modifier)
 		start_modifier()
-
 
 /obj/item/cloaking_device/proc/start_modifier()
 	if (!owner)
@@ -120,7 +117,6 @@
 	if (modifier)
 		modifier.stop(1)
 		modifier = null
-
 
 /obj/item/cloaking_device/attackby(obj/item/W as obj, mob/user as mob)
 	if(istype(W, /obj/item/cell))
@@ -142,9 +138,8 @@
 			return
 	..()
 
-
 /obj/item/cloaking_device/examine(mob/user)
-	..()
+	. = ..()
 	if (!cell)
 		to_chat(user, "It needs a power cell to function.")
 	else
@@ -158,6 +153,13 @@
 		owner = null
 		start_modifier()
 
+/mob/proc/disable_cloaking_device()
+	for(var/datum/modifier/cloaking_device/mod in modifiers)
+		if(istype(mod))
+			var/obj/item/cloaking_device/CD = locate(/obj/item/cloaking_device, src)
+			if(CD)
+				CD.deactivate()
+
 /*
 	Modifier
 */
@@ -165,13 +167,12 @@
 	..()
 	var/mob/living/L = target
 	L.cloaked = 1
-	L.mouse_opacity = 0
+	L.mouse_opacity = MOUSE_OPACITY_TRANSPARENT
 	L.update_icon()
-
 
 /datum/modifier/cloaking_device/deactivate()
 	..()
-	for (var/a in cloaking_devices)//Check for any other cloaks
+	for (var/a in GLOB.cloaking_devices)//Check for any other cloaks
 		if (a != source)
 			var/obj/item/cloaking_device/CD = a
 			if (CD.get_holding_mob() == target)
@@ -179,9 +180,8 @@
 					return
 	var/mob/living/L = target
 	L.cloaked = 0
-	L.mouse_opacity = 1
+	L.mouse_opacity = MOUSE_OPACITY_ICON
 	L.update_icon()
-
 
 /datum/modifier/cloaking_device/check_validity()
 	.=..()

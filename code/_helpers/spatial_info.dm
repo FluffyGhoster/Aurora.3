@@ -21,7 +21,7 @@
 /mob/abstract/oranges_ear
 	icon_state = null
 	invisibility = 0
-	mouse_opacity = 0
+	mouse_opacity = MOUSE_OPACITY_TRANSPARENT
 	faction = null
 	screens = null
 
@@ -31,6 +31,11 @@
 
 /mob/abstract/oranges_ear/Initialize(mapload)
 	SHOULD_CALL_PARENT(FALSE)
+
+	if(flags_1 & INITIALIZED_1)
+		stack_trace("Warning: [src]([type]) initialized multiple times!")
+	flags_1 |= INITIALIZED_1
+
 	return INITIALIZE_HINT_NORMAL
 
 /mob/abstract/oranges_ear/Destroy(force)
@@ -172,6 +177,29 @@
 	// Returns a list of mobs who can hear any of the radios given in @radios
 	for(var/obj/item/device/radio/radio in radios)
 		. |= get_hearers_in_LOS(radio.canhear_range, radio, FALSE)
+
+// get_hearers_in_LOS but for anything AIs care to target
+/proc/get_targets_in_LOS(view_radius, atom/source)
+	var/turf/center_turf = get_turf(source)
+	if(!center_turf)
+		return
+
+	if(view_radius <= 0)
+		. = list()
+		for(var/atom/movable/target as anything in center_turf)
+			var/list/tgt_contents = target.important_recursive_contents?[RECURSIVE_CONTENTS_AI_TARGETS]
+			if(tgt_contents)
+				. += tgt_contents
+		return
+
+	. = SSspatial_grid.orthogonal_range_search(source, SPATIAL_GRID_CONTENTS_TYPE_TARGETS, view_radius)
+
+	for(var/mob/target as anything in .)
+		var/los = null
+		SPATIAL_CHECK_LOS(los, source, target, view_radius)
+		if(!los)
+			. -= target
+			continue
 
 ///Calculate if two atoms are in sight, returns TRUE or FALSE
 /proc/inLineOfSight(X1,Y1,X2,Y2,Z=1,PX1=16.5,PY1=16.5,PX2=16.5,PY2=16.5)
@@ -364,7 +392,7 @@
 ///Checks if the mob provided (must_be_alone) is alone in an area
 /proc/alone_in_area(area/the_area, mob/must_be_alone, check_type = /mob/living/carbon)
 	var/area/our_area = get_area(the_area)
-	for(var/carbon in living_mob_list)
+	for(var/carbon in GLOB.living_mob_list)
 		if(!istype(carbon, check_type))
 			continue
 		if(carbon == must_be_alone)

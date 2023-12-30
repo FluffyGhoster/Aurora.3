@@ -5,7 +5,7 @@
 	icon_state = "syringe-cartridge"
 	var/icon_flight = "syringe-cartridge-flight" //so it doesn't look so weird when shot
 	matter = list(DEFAULT_WALL_MATERIAL = 125, MATERIAL_GLASS = 375)
-	flags = CONDUCT
+	obj_flags = OBJ_FLAG_CONDUCTABLE
 	slot_flags = SLOT_BELT | SLOT_EARS
 	throwforce = 3
 	force = 3
@@ -51,7 +51,7 @@
 			var/mob/living/L = hit_atom
 			//unfortuately we don't know where the dart will actually hit, since that's done by the parent.
 			if(L.can_inject() && syringe.reagents)
-				var/decl/reagent/reagent_log = syringe.reagents.get_reagents()
+				var/singleton/reagent/reagent_log = syringe.reagents.get_reagents()
 				syringe.reagents.trans_to_mob(L, 15, CHEM_BLOOD)
 				admin_inject_log(thrower, L, src, reagent_log, syringe.reagents.get_temperature(), 15, violent=1)
 

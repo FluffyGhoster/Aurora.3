@@ -23,7 +23,7 @@
 		.= loc.loc
 
 /proc/get_area_name(N) //get area by its name
-	for(var/area/A in all_areas)
+	for(var/area/A in GLOB.all_areas)
 		if(A.name == N)
 			return A
 	return 0
@@ -64,7 +64,7 @@
 			return get_step(start, EAST)
 
 /proc/get_mob_by_key(var/key)
-	for(var/mob/M in mob_list)
+	for(var/mob/M in GLOB.mob_list)
 		if(M.ckey == lowertext(key))
 			return M
 	return null
@@ -76,7 +76,7 @@
 	var/list/candidates = list() //List of candidate KEYS to assume control of the new larva ~Carn
 	var/i = 0
 	while(candidates.len <= 0 && i < 5)
-		for(var/mob/abstract/observer/G in player_list)
+		for(var/mob/abstract/observer/G in GLOB.player_list)
 			if(((G.client.inactivity/10)/60) <= buffer + i) // the most active players are more likely to become an alien
 				if(!(G.mind && G.mind.current && G.mind.current.stat != DEAD))
 					candidates += G.key
@@ -95,7 +95,7 @@
 
 /proc/Show2Group4Delay(obj/O, list/group, delay=0)
 	if(!isobj(O))	return
-	if(!group)	group = clients
+	if(!group)	group = GLOB.clients
 	for(var/client/C in group)
 		C.screen += O
 	if(delay)
@@ -103,7 +103,7 @@
 			for(var/client/C in group)
 				C.screen -= O
 
-datum/projectile_data
+/datum/projectile_data
 	var/src_x
 	var/src_y
 	var/time
@@ -114,7 +114,7 @@ datum/projectile_data
 	var/dest_y
 
 /datum/projectile_data/New(var/src_x, var/src_y, var/time, var/distance, \
-						   var/power_x, var/power_y, var/dest_x, var/dest_y)
+							var/power_x, var/power_y, var/dest_x, var/dest_y)
 	src.src_x = src_x
 	src.src_y = src_y
 	src.time = time
@@ -200,13 +200,13 @@ datum/projectile_data
 	return mixedcolor
 
 /**
-* Gets the highest and lowest pressures from the tiles in cardinal directions
+* Gets the highest and lowest pressures from the tiles in GLOB.cardinal directions
 * around us, then checks the difference.
 */
 /proc/getOPressureDifferential(var/turf/loc)
 	var/minp=16777216;
 	var/maxp=0;
-	for(var/dir in cardinal)
+	for(var/dir in GLOB.cardinal)
 		var/turf/simulated/T=get_turf(get_step(loc,dir))
 		var/cp=0
 		if(T && istype(T) && T.zone)
@@ -227,7 +227,7 @@ datum/projectile_data
 
 /proc/getCardinalAirInfo(var/turf/loc, var/list/stats=list("temperature"))
 	var/list/temps = new/list(4)
-	for(var/dir in cardinal)
+	for(var/dir in GLOB.cardinal)
 		var/direction
 		switch(dir)
 			if(NORTH)
@@ -266,7 +266,7 @@ datum/projectile_data
 /proc/SecondsToTicks(var/seconds)
 	return seconds * 10
 
-/proc/round_is_spooky(var/spookiness_threshold = config.cult_ghostwriter_req_cultists)
+/proc/round_is_spooky(var/spookiness_threshold = GLOB.config.cult_ghostwriter_req_cultists)
 	if(enabled_spooking)
 		return 1
 	else
@@ -283,7 +283,7 @@ datum/projectile_data
 /proc/flick_overlay(image/I, list/show_to, duration)
 	for(var/client/C in show_to)
 		C.images += I
-	addtimer(CALLBACK(GLOBAL_PROC, /.proc/remove_images_from_clients, I, show_to), duration)
+	addtimer(CALLBACK(GLOBAL_PROC, GLOBAL_PROC_REF(remove_images_from_clients), I, show_to), duration)
 
 /proc/flick_overlay_view(image/I, atom/target, duration) //wrapper for the above, flicks to everyone who can see the target atom
 	var/list/viewing = list()

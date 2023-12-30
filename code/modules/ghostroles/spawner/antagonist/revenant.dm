@@ -44,13 +44,13 @@
 	if(R.client)
 		to_chat(R, FONT_LARGE(SPAN_CULT("You can now speak with all revenants in the game world by using \"[R.client.prefs.language_prefixes[1]]rs\" before a message.")))
 	if(!has_fired)
-		INVOKE_ASYNC(src, .proc/play_ambience, R)
-	INVOKE_ASYNC(src, .proc/check_rift)
+		INVOKE_ASYNC(src, PROC_REF(play_ambience), R)
+	INVOKE_ASYNC(src, PROC_REF(check_rift))
 
 	return R
 
 /datum/ghostspawner/revenant/proc/play_ambience(var/mob/living/carbon/human/H)
-	for(var/m in player_list - H)
+	for(var/m in GLOB.player_list - H)
 		var/mob/M = m
 		if(M.ear_deaf)
 			continue
@@ -65,7 +65,7 @@
 	if(revenants.kill_count > kills_needed)
 		var/turf/rift_turf
 		var/list/possible_landmarks = list()
-		for(var/thing in landmarks_list)
+		for(var/thing in GLOB.landmarks_list)
 			var/obj/effect/landmark/landmark = thing
 			if(landmark.name == "RevenantRift")
 				possible_landmarks += landmark

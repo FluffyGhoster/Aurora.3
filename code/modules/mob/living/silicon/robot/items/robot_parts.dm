@@ -3,7 +3,7 @@
 	icon = 'icons/obj/robot_parts.dmi'
 	item_state = "buildpipe"
 	icon_state = "blank"
-	flags = CONDUCT
+	obj_flags = OBJ_FLAG_CONDUCTABLE
 	slot_flags = SLOT_BELT
 	var/list/part = null // Order of args is important for installing robolimbs.
 	var/sabotaged = 0 //Emagging limbs can have repercussions when installed as prosthetics.
@@ -18,7 +18,7 @@
 	..(newloc)
 	if(model_info && model)
 		model_info = model
-		var/datum/robolimb/R = all_robolimbs[model]
+		var/datum/robolimb/R = GLOB.all_robolimbs[model]
 		if(R)
 			name = "[R.company] robot [initial(name)]"
 			desc = "[R.desc]"
@@ -28,9 +28,9 @@
 	else
 		name = "robot [initial(name)]"
 
-/obj/item/robot_parts/examine(mob/user, distance)
+/obj/item/robot_parts/examine(mob/user, distance, is_adjacent)
 	. = ..()
-	if(Adjacent(user))
+	if(is_adjacent)
 		report_missing_parts(user)
 
 /obj/item/robot_parts/proc/report_missing_parts(var/mob/user)
@@ -143,20 +143,6 @@
 	return FALSE
 
 /obj/item/robot_parts/robot_suit/attackby(obj/item/W, mob/user)
-	if(istype(W, /obj/item/stack/material) && W.get_material_name() == DEFAULT_WALL_MATERIAL && !l_arm && !r_arm && !l_leg && !r_leg && !chest && !head)
-		var/obj/item/stack/material/M = W
-		if(M.use(1))
-			var/obj/item/secbot_assembly/ed209_assembly/B = new /obj/item/secbot_assembly/ed209_assembly
-			B.forceMove(get_turf(src))
-			to_chat(user, SPAN_NOTICE("You armed the robot frame."))
-			if(user.get_inactive_hand() == src)
-				user.remove_from_mob(src)
-				user.put_in_inactive_hand(B)
-			qdel(src)
-		else
-			to_chat(user, SPAN_WARNING("You need one sheet of metal to arm the robot frame."))
-		return
-
 	if(istype(W, /obj/item/robot_parts/l_leg))
 		if(l_leg)
 			to_chat(user, SPAN_WARNING("\The [src] already has \a [l_leg] installed."))
@@ -230,14 +216,14 @@
 
 			user.drop_from_inventory(M, O)
 			O.mmi = M
-			O.invisibility = 0
+			O.set_invisibility(0)
 			O.custom_name = "Ai shell"
 
 			O.job = "AI Shell"
 			O.cell = chest.cell
 			O.cell.forceMove(O)
-			W.forceMove(O) 
-			
+			W.forceMove(O)
+
 			if(O.cell)
 				var/datum/robot_component/cell_component = O.components["power cell"]
 				cell_component.wrapped = O.cell
@@ -258,7 +244,7 @@
 				return
 
 			if(!head.law_manager)
-				if(!is_alien_whitelisted(M.brainmob, SPECIES_IPC) && config.usealienwhitelist)
+				if(!is_alien_whitelisted(M.brainmob, SPECIES_IPC) && GLOB.config.usealienwhitelist)
 					to_chat(user, SPAN_WARNING("\The [W] does not seem to fit. (The player lacks the appropriate whitelist.)"))
 					return
 
@@ -277,7 +263,7 @@
 				new_shell.add_language(LANGUAGE_EAL)
 				var/newname = sanitizeSafe(input(new_shell, "Enter a name, or leave blank for the default name.", "Name change","") as text, MAX_NAME_LEN)
 				if(!newname)
-					var/datum/language/L = all_languages[new_shell.species.default_language]
+					var/datum/language/L = GLOB.all_languages[new_shell.species.default_language]
 					newname = L.get_random_name()
 				new_shell.real_name = newname
 				new_shell.name = new_shell.real_name
@@ -298,7 +284,7 @@
 
 				user.drop_from_inventory(M, O)
 				O.mmi = W
-				O.invisibility = 0
+				O.set_invisibility(0)
 				O.custom_name = created_name
 				O.updatename("Default")
 

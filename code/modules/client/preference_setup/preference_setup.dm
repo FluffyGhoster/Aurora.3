@@ -28,35 +28,30 @@
 	sort_order = 2
 	category_item_type = /datum/category_item/player_setup_item/origin
 
-/datum/category_group/player_setup_category/skill_preferences
-	name = "Skills"
-	sort_order = 3
-	category_item_type = /datum/category_item/player_setup_item/skills
-
 /datum/category_group/player_setup_category/occupation_preferences
 	name = "Occupation"
-	sort_order = 4
+	sort_order = 3
 	category_item_type = /datum/category_item/player_setup_item/occupation
 
 /datum/category_group/player_setup_category/appearance_preferences
 	name = "Roles"
-	sort_order = 5
+	sort_order = 4
 	category_item_type = /datum/category_item/player_setup_item/antagonism
 
 /datum/category_group/player_setup_category/loadout_preferences
 	name = "Loadout"
-	sort_order = 6
+	sort_order = 5
 	category_item_type = /datum/category_item/player_setup_item/loadout
 
 /datum/category_group/player_setup_category/global_preferences
 	name = "Global"
-	sort_order = 7
+	sort_order = 6
 	category_item_type = /datum/category_item/player_setup_item/player_global
 	sql_role = SQL_PREFERENCES
 
 /datum/category_group/player_setup_category/other_preferences
 	name = "Other"
-	sort_order = 8
+	sort_order = 7
 	category_item_type = /datum/category_item/player_setup_item/other
 
 /****************************
@@ -150,7 +145,7 @@
 /datum/category_group/player_setup_category/proc/load_character(var/savefile/S)
 	// Load all data, then sanitize it.
 	// Need due to, for example, the 01_basic module relying on species having been loaded to sanitize correctly but that isn't loaded until module 03_body.
-	if (!config.sql_saves || !establish_db_connection(dbcon))
+	if (!GLOB.config.sql_saves || !establish_db_connection(GLOB.dbcon))
 		for(var/datum/category_item/player_setup_item/PI in items)
 			PI.load_character(S)
 	else
@@ -159,14 +154,14 @@
 
 	for(var/datum/category_item/player_setup_item/PI in items)
 		PI.load_special(S)
-		PI.sanitize_character(config.sql_saves)
+		PI.sanitize_character(GLOB.config.sql_saves)
 
 /datum/category_group/player_setup_category/proc/save_character(var/savefile/S)
 	// Sanitize all data, then save it
 	for (var/datum/category_item/player_setup_item/PI in items)
 		PI.sanitize_character()
 
-	if (!config.sql_saves || !establish_db_connection(dbcon))
+	if (!GLOB.config.sql_saves || !establish_db_connection(GLOB.dbcon))
 		for (var/datum/category_item/player_setup_item/PI in items)
 			PI.save_character(S)
 	else if (modified)
@@ -175,20 +170,20 @@
 		modified = 0
 
 /datum/category_group/player_setup_category/proc/load_preferences(var/savefile/S)
-	if (!config.sql_saves || !establish_db_connection(dbcon))
+	if (!GLOB.config.sql_saves || !establish_db_connection(GLOB.dbcon))
 		for (var/datum/category_item/player_setup_item/PI in items)
 			PI.load_preferences(S)
 	else
 		handle_sql_loading(SQL_PREFERENCES)
 
 	for (var/datum/category_item/player_setup_item/PI in items)
-		PI.sanitize_preferences(config.sql_saves)
+		PI.sanitize_preferences(GLOB.config.sql_saves)
 
 /datum/category_group/player_setup_category/proc/save_preferences(var/savefile/S)
 	for (var/datum/category_item/player_setup_item/PI in items)
 		PI.sanitize_preferences()
 
-	if (!config.sql_saves || !establish_db_connection(dbcon))
+	if (!GLOB.config.sql_saves || !establish_db_connection(GLOB.dbcon))
 		for (var/datum/category_item/player_setup_item/PI in items)
 			PI.save_preferences(S)
 	else
@@ -201,7 +196,7 @@
 /datum/category_group/player_setup_category/proc/content(var/mob/user)
 	. = "<table style='width:100%'><tr style='vertical-align:top'><td style='width:50%'>"
 	var/current = 0
-	var/halfway = items.len / 2
+	var/halfway = items.len / 2.5
 	for(var/datum/category_item/player_setup_item/PI in items)
 		if(halfway && current++ >= halfway)
 			halfway = 0

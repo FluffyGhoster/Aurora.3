@@ -87,7 +87,7 @@
 	setup_parts()
 	middle.add_overlay("activated")
 	update_list(TRUE)
-	addtimer(CALLBACK(src, .proc/round_startset), 100)
+	addtimer(CALLBACK(src, PROC_REF(round_startset)), 100)
 
 /obj/machinery/gravity_generator/main/station/proc/round_startset()
 	if(round_start >= 1)
@@ -127,7 +127,7 @@
 	var/eventon = 0
 
 /obj/machinery/gravity_generator/main/Destroy()
-	log_debug("Gravity Generator Destroyed")
+	LOG_DEBUG("Gravity Generator Destroyed")
 	investigate_log("was destroyed!", "gravity")
 	on = 0
 	QDEL_NULL(soundloop)
@@ -135,7 +135,7 @@
 	for(var/obj/machinery/gravity_generator/part/O in parts)
 		O.main_part = null
 		qdel(O)
-	linked.gravity_generator = null
+	linked?.gravity_generator = null
 	return ..()
 
 /obj/machinery/gravity_generator/main/proc/eventshutofftoggle() // Used by the gravity event. Bypasses charging and all of that stuff.
@@ -147,7 +147,7 @@
 	charging_state = POWER_UP
 	set_power()
 	eventon = !eventon
-	addtimer(CALLBACK(src, .proc/reset_event), 100) // Because it takes 100 seconds for it to recharge. And we need to make sure we resen this var
+	addtimer(CALLBACK(src, PROC_REF(reset_event)), 100) // Because it takes 100 seconds for it to recharge. And we need to make sure we resen this var
 
 /obj/machinery/gravity_generator/main/proc/reset_event()
 	eventon = !eventon
@@ -350,14 +350,14 @@
 	if(new_state) // If we turned on
 		if(!area.has_gravity())
 			alert = 1
-			gravity_is_on = 1
+			GLOB.gravity_is_on = 1
 			soundloop.start(src)
 			investigate_log("was brought online and is now producing gravity for this level.", "gravity")
 			message_admins("The gravity generator was brought online. (<A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[x];Y=[y];Z=[z]'>[area.name]</a>)")
 	else
 		if(area.has_gravity())
 			alert = 1
-			gravity_is_on = 0
+			GLOB.gravity_is_on = 0
 			soundloop.stop(src)
 			investigate_log("was brought offline and there is now no gravity for this level.", "gravity")
 			message_admins("The gravity generator was brought offline with no backup generator. (<A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[x];Y=[y];Z=[z]'>[area.name]</a>)")
@@ -418,12 +418,12 @@
 
 /obj/machinery/gravity_generator/main/proc/pulse_radiation(var/amount = 20)
 	for(var/mob/living/L in view(7, src))
-		L.apply_damage(amount, IRRADIATE, damage_flags = DAM_DISPERSED)
+		L.apply_damage(amount, DAMAGE_RADIATION, damage_flags = DAMAGE_FLAG_DISPERSED)
 
 // Shake everyone on the z level to let them know that gravity was enagaged/disenagaged.
 /obj/machinery/gravity_generator/main/proc/shake_everyone()
 	var/turf/our_turf = get_turf(src)
-	for(var/mob/M in mob_list)
+	for(var/mob/M in GLOB.mob_list)
 		var/turf/their_turf = get_turf(M)
 		if(their_turf && (their_turf.z == our_turf.z))
 			M.update_gravity(M.mob_has_gravity())
@@ -450,19 +450,19 @@
 /obj/machinery/gravity_generator/main/Initialize()
 	. = ..()
 	soundloop = new(src, start_immediately = FALSE)
-	addtimer(CALLBACK(src, .proc/updateareas), 10)
+	addtimer(CALLBACK(src, PROC_REF(updateareas)), 10)
 	return INITIALIZE_HINT_LATELOAD
 
 /obj/machinery/gravity_generator/main/LateInitialize()
 	if(current_map.use_overmap && !linked)
-		var/my_sector = map_sectors["[z]"]
+		var/my_sector = GLOB.map_sectors["[z]"]
 		if (istype(my_sector, /obj/effect/overmap/visitable))
 			attempt_hook_up(my_sector)
 	if(linked)
 		linked.gravity_generator = src
 
 /obj/machinery/gravity_generator/main/proc/updateareas()
-	for(var/area/A in all_areas)
+	for(var/area/A in GLOB.all_areas)
 		if(!(get_area_type(A) == AREA_STATION))
 			continue
 		localareas += A
@@ -484,7 +484,7 @@
 	set_state(FALSE)
 	sleep(30)
 	set_state(TRUE)
-	for(var/mob/living/M in mob_list)
+	for(var/mob/living/M in GLOB.mob_list)
 		var/turf/their_turf = get_turf(M)
 		if(their_turf?.loc ==  Area)
 			if(ishuman(M))
@@ -494,3 +494,18 @@
 					continue
 			to_chat(M, SPAN_DANGER("Suddenly the gravity pushed you up to the ceiling and dropped you back on the floor with great force!"))
 			M.fall_impact(1)
+
+
+#undef POWER_IDLE
+#undef POWER_UP
+#undef POWER_DOWN
+
+#undef GRAV_NEEDS_SCREWDRIVER
+#undef GRAV_NEEDS_WELDING
+#undef GRAV_NEEDS_PLASTEEL
+#undef GRAV_NEEDS_WRENCH
+
+#undef AREA_ERRNONE
+#undef AREA_STATION
+#undef AREA_SPACE
+#undef AREA_SPECIAL

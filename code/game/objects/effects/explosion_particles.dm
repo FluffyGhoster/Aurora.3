@@ -4,7 +4,7 @@
 	icon_state = "explosion_particle"
 	opacity = 1
 	anchored = 1
-	mouse_opacity = 0
+	mouse_opacity = MOUSE_OPACITY_TRANSPARENT
 
 /obj/effect/expl_particles/New()
 	..()
@@ -30,7 +30,7 @@
 	for(i=0, i<src.number, i++)
 		spawn(0)
 			var/obj/effect/expl_particles/expl = new /obj/effect/expl_particles(src.location)
-			var/direct = pick(alldirs)
+			var/direct = pick(GLOB.alldirs)
 			for(i=0, i<pick(1;25,2;50,3,4;200), i++)
 				sleep(1)
 				step(expl,direct)
@@ -41,7 +41,7 @@
 	icon_state = "explosion"
 	opacity = 1
 	anchored = 1
-	mouse_opacity = 0
+	mouse_opacity = MOUSE_OPACITY_TRANSPARENT
 	pixel_x = -32
 	pixel_y = -32
 

@@ -6,7 +6,7 @@
 	icon = 'icons/obj/item/tools/inductive_charger.dmi'
 	icon_state = "inductive_charger"
 	item_state = "inductive_charger"
-	flags = HELDMAPTEXT
+	item_flags = ITEM_FLAG_HELD_MAP_TEXT
 	contained_sprite = TRUE
 	var/is_in_use = FALSE
 	var/ready_to_use = TRUE
@@ -58,7 +58,7 @@
 
 	is_in_use = TRUE
 	user.visible_message("<b>[user]</b> begins waving \the [src] around \the [target]...", SPAN_NOTICE("You prepare to wirelessly charge \the [target]..."), range = 3)
-	if(!do_after(user, 50, TRUE, target))
+	if(!do_after(user, 50, target))
 		is_in_use = FALSE
 		return
 	is_in_use = FALSE
@@ -83,7 +83,7 @@
 
 /obj/item/inductive_charger/proc/message_and_use(mob/user, var/others_message, var/self_message)
 	user.visible_message(others_message, self_message, range = 3)
-	addtimer(CALLBACK(src, .proc/recharge), recharge_time)
+	addtimer(CALLBACK(src, PROC_REF(recharge)), recharge_time)
 	ready_to_use = FALSE
 	check_maptext(SMALL_FONTS(6, "Charge"))
 

@@ -18,14 +18,23 @@ var/list/admin_datums = list()
 
 	var/list/watched_processes	// Processes marked to be shown in Status instead of just Processes.
 
+/datum/admins/vv_edit_var(var_name, var_value)
+	if(var_name == NAMEOF(src, rights))
+		return FALSE
+	if(var_name == NAMEOF(src, owner))
+		return FALSE
+	if(var_name == NAMEOF(src, original_mob))
+		return FALSE
+	return ..()
+
 /datum/admins/New(initial_rank = "Temporary Admin", initial_rights = 0, ckey)
 	if(!ckey)
-		error("Admin datum created without a ckey argument. Datum has been deleted")
+		log_world("ERROR: Admin datum created without a ckey argument. Datum has been deleted")
 		qdel(src)
 		return
 
 	if (!current_map)
-		SSatlas.OnMapload(CALLBACK(src, .proc/update_newscaster_sig))
+		SSatlas.OnMapload(CALLBACK(src, PROC_REF(update_newscaster_sig)))
 	else
 		update_newscaster_sig()
 
@@ -41,18 +50,18 @@ var/list/admin_datums = list()
 		owner = C
 		owner.holder = src
 		owner.add_admin_verbs()	//TODO
-		staff |= C
+		GLOB.staff |= C
 
 /datum/admins/proc/disassociate()
 	if(owner)
-		staff -= owner
+		GLOB.staff -= owner
 		owner.remove_admin_verbs()
 		owner.deadmin_holder = owner.holder
 		owner.holder = null
 
 /datum/admins/proc/reassociate()
 	if(owner)
-		staff += owner
+		GLOB.staff += owner
 		owner.holder = src
 		owner.deadmin_holder = null
 		owner.add_admin_verbs()
@@ -73,7 +82,7 @@ if rights_required == 0, then it simply checks if they are an admin.
 if it doesn't return 1 and show_msg=1 it will prints a message explaining why the check has failed
 generally it would be used like so:
 
-proc/admin_proc()
+/proc/admin_proc()
 	if(!check_rights(R_ADMIN)) return
 	to_world("you have enough rights!")
 
