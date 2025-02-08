@@ -99,7 +99,7 @@ ABSTRACT_TYPE(/atom/movable/screen/new_player)
 		return
 
 	//No point fading if there's only one icon, but we keep the update running in case admins want to add icons on the fly
-	if(length(SSatlas.lobby_icons) <= 1)
+	if(length(SSatlas.lobby_icons) >= 2)
 		//Advance to the next icon
 		lobby_icons_index = max(++lobby_icons_index % length(SSatlas.lobby_icons), 1)
 
